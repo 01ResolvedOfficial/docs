@@ -22,6 +22,9 @@
     "light": "/favicon-light.svg",
     "dark": "/favicon-dark.svg"
   },
+  "custom": {
+    "css": "/custom.css"
+  },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",

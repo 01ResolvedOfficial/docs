@@ -1,0 +1,12 @@
+/* Logo sizing */
+a[class*="logo"] img,
+a[class*="logo"] svg,
+nav img,
+nav svg,
+header img,
+header svg,
+.logo img,
+.logo svg {
+  height: 28px !important;
+  width: auto !important;
+}
