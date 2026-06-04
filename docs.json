@@ -61,14 +61,29 @@
             ]
           },
           {
-            "group": "Endpoints",
+            "group": "Project",
             "pages": [
-              "api-reference/dao",
-              "api-reference/proposals",
-              "api-reference/trading-activity",
-              "api-reference/global-dashboard",
-              "api-reference/project-overview",
-              "api-reference/legal-entities",
+              "api-reference/project/overview",
+              "api-reference/project/financials",
+              "api-reference/project/movements",
+              "api-reference/project/proposals"
+            ]
+          },
+          {
+            "group": "Decision Markets",
+            "pages": [
+              "api-reference/decision-markets/index"
+            ]
+          },
+          {
+            "group": "Ownership Coin Market",
+            "pages": [
+              "api-reference/ownership-coin-market/index"
+            ]
+          },
+          {
+            "group": "API Key",
+            "pages": [
               "api-reference/api-key"
             ]
           }

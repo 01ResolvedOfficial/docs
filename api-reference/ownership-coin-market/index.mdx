@@ -1,0 +1,370 @@
+---
+title: "Ownership Coin Market"
+description: "Global metrics, market cap, treasury value, launches, and search across all ownership coin projects."
+icon: "globe"
+---
+
+These endpoints return data aggregated across **all** ownership coin projects on 01Resolved. No parameters are required unless noted.
+
+---
+
+## GET /v1/global-dashboard/overview/ownership-coins/market-cap-chart
+
+Returns the combined market cap of all ownership coin projects with hourly historical chart data.
+
+**Parameters:** none
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/overview/ownership-coins/market-cap-chart"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "marketCapValue": "102638651.52",
+    "marketCapValueLast24h": "112256306.05",
+    "marketCapChangePercentage24h": "-8.41",
+    "chart": [
+      { "timestamp": "2026-06-03T10:00:00.000Z", "value": "112256306.05" },
+      { "timestamp": "2026-06-03T11:00:00.000Z", "value": "112786961.46" }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `marketCapValue` | Current combined market cap in USD across all ownership coin projects |
+| `marketCapValueLast24h` | Combined market cap 24 hours ago |
+| `marketCapChangePercentage24h` | 24h percentage change in combined market cap |
+| `chart[].timestamp` | UTC timestamp for this hourly data point |
+| `chart[].value` | Combined market cap at this timestamp |
+
+---
+
+## GET /v1/global-dashboard/overview/ownership-coins/treasury-value-chart
+
+Returns the combined treasury value of all ownership coin projects with hourly historical chart data.
+
+**Parameters:** none
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/overview/ownership-coins/treasury-value-chart"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "treasuryValue": "30675042.09",
+    "treasuryValueLast24h": "31328908.09",
+    "treasuryValueChangePercentage24h": "-1.17",
+    "chart": [
+      { "timestamp": "2026-06-03T10:00:00.000Z", "value": "31328908.09" },
+      { "timestamp": "2026-06-03T11:00:00.000Z", "value": "31393278.35" }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `treasuryValue` | Current combined treasury value in USD across all projects |
+| `treasuryValueLast24h` | Combined treasury value 24 hours ago |
+| `treasuryValueChangePercentage24h` | 24h percentage change in combined treasury value |
+| `chart[].value` | Combined treasury value at this hourly timestamp |
+
+---
+
+## GET /v1/global-dashboard/projects
+
+Returns all ownership coin projects with their proposal activity summary.
+
+**Parameters:** `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/projects?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 26 },
+  "data": [
+    {
+      "organizationSlug": "jurassic-finance",
+      "organizationName": "Jurassic Finance",
+      "organizationImageUrl": "https://imagedelivery.net/...",
+      "proposalCount": 1,
+      "lastProposalStatus": "live",
+      "lastProposalEndDate": "2026-06-05T03:38:36.000Z"
+    },
+    {
+      "organizationSlug": "metadao",
+      "organizationName": "MetaDAO",
+      "organizationImageUrl": "https://imagedelivery.net/...",
+      "proposalCount": 37,
+      "lastProposalStatus": "resolved",
+      "lastProposalEndDate": "2026-05-18T03:43:13.000Z"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `organizationSlug` | Project slug. Use with [Project](/api-reference/project/overview) endpoints for detailed data |
+| `proposalCount` | Total proposals created by this project |
+| `lastProposalStatus` | Status of the most recent proposal: `live` or `resolved` |
+| `lastProposalEndDate` | End date of the most recent proposal |
+
+---
+
+## GET /v1/global-dashboard/projects-launch
+
+Returns all ownership coin projects with full token metrics, treasury data, and launch state. The richest per-project summary available from a single endpoint.
+
+**Parameters:** `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/projects-launch?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 12 },
+  "data": [
+    {
+      "organizationSlug": "metadao",
+      "organizationName": "MetaDAO",
+      "launchState": "Complete",
+      "tokenSymbol": "META",
+      "tokenUsdPrice": "3.0282",
+      "tokenPriceChangePercentage24h": "-10.45",
+      "tokenPriceChangePercentage7d": "3.48",
+      "tokenCirculatingSupply": "22684697.68",
+      "tokenTotalSupply": "22684697.68",
+      "marketCap": "68692867.06",
+      "fdv": "68692867.06",
+      "treasuryValue": 11983785.31,
+      "spendingLimit": 240000,
+      "proposalCount": 37,
+      "netAssetValue": 0.5363,
+      "monthsOfRunway": 42.14,
+      "mNAV": 5.73,
+      "premDisc": 4.65
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `launchState` | ICO state: `Complete`, `Live`, etc. |
+| `marketCap` | Current market cap in USD. Formula: `tokenUsdPrice × circulatingSupply` |
+| `fdv` | Fully diluted valuation in USD. Formula: `tokenUsdPrice × totalSupply` |
+| `netAssetValue` | Per-token non-native treasury backing in USD |
+| `monthsOfRunway` | Months of runway at current spend rate |
+| `mNAV` | Market cap / NAV ratio. Indicates how much premium the market applies over treasury backing |
+| `premDisc` | Premium or discount to NAV (%). Positive = trading above NAV |
+
+---
+
+## GET /v1/global-dashboard/recent-launches
+
+Returns all ICOs currently live or recently launched, with full raise and token details.
+
+**Parameters:** `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/recent-launches?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 68 },
+  "data": [
+    {
+      "launchAddr": "9qEQo5P6kwcWg1YhyPB5CEX6MAzufsT3a25HuxQg7WhC",
+      "baseMint": "DwCBrWrAGokHmysLL2XbY7TCZpbRH9QUAZxHnyWxmeta",
+      "title": "GeSIM",
+      "subDescription": "GeSIM is the privacy layer for on-chain lives.",
+      "organizationSlug": "gesim",
+      "tokenSymbol": "GSIM",
+      "state": "Live",
+      "minimumRaiseAmount": "28000000000",
+      "committedAmount": "70562000000",
+      "fundsAccepted": null,
+      "unixTimestampStarted": "1780437612",
+      "secondsForLaunch": "604800",
+      "isFeatured": false,
+      "isPermissionLess": true,
+      "tokenUsdPrice": "0",
+      "icoReturn": 0,
+      "fdv": null
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `launchAddr` | Onchain address of the ICO launch program |
+| `state` | Launch state: `Live`, `Complete`, etc. |
+| `minimumRaiseAmount` | Minimum raise target in raw USDC units. Divide by `10^6` for USDC value |
+| `committedAmount` | Total USDC committed by contributors. Divide by `10^6` |
+| `fundsAccepted` | Total USDC accepted (null if raise not yet closed) |
+| `secondsForLaunch` | Duration of the ICO raise window in seconds (604800 = 7 days) |
+| `isPermissionLess` | Whether any wallet can contribute without whitelisting |
+| `icoReturn` | Return multiple relative to ICO price since launch |
+
+---
+
+## GET /v1/global-dashboard/completed-launches/info
+
+Returns all completed ICOs with token holder counts and final raise details.
+
+**Parameters:** `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/completed-launches/info?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 12 },
+  "data": [
+    {
+      "launchAddr": "11111111111111111111111111111111",
+      "baseMint": "METAwkXcqyXKy1AtsSgJ8JiUHwGCafnZL38n3vYmeta",
+      "title": "MetaDAO",
+      "state": "Complete",
+      "minimumRaiseAmount": "2200000000000",
+      "committedAmount": "8054207616000",
+      "fundsAccepted": "8054207616000",
+      "tokenSymbol": "META",
+      "tokenUsdPrice": "3.0282",
+      "holdersCount": "5184",
+      "isFeatured": true
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `holdersCount` | Number of wallets currently holding this token |
+| `fundsAccepted` | Final USDC accepted at close of ICO. Divide by `10^6` |
+| `isFeatured` | Whether this project is featured on the 01Resolved platform |
+
+---
+
+## GET /v1/global-dashboard/graveyard-launches
+
+Returns ICOs that completed but whose projects have since been liquidated or wound down.
+
+**Parameters:** `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/graveyard-launches?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 2 },
+  "data": [
+    {
+      "launchAddr": "8Nmd13rpULJjY7h6oxCfuTWy8WkZxcuDrDWiSdnViVuo",
+      "title": "Ranger",
+      "tokenSymbol": "RNGR",
+      "state": "Complete",
+      "reasonStatus": "liquidated",
+      "dateEnded": "2026-03-05T16:47:03.000Z",
+      "minimumRaiseAmount": "6000000000000",
+      "committedAmount": "86398012123099",
+      "fundsAccepted": "8000000",
+      "fundRaised": "86398012.12",
+      "targetRaise": "6000000",
+      "icoPrice": "0.8",
+      "icoInvestors": "8761",
+      "organizationSlug": "ranger"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `reasonStatus` | Why the project ended (e.g. `liquidated`) |
+| `dateEnded` | Date the project was wound down |
+| `fundRaised` | Total USDC raised during the ICO (human-readable) |
+| `targetRaise` | The project's stated raise target in USDC |
+| `icoInvestors` | Number of wallets that participated in the ICO |
+
+---
+
+## GET /v1/global-dashboard/search
+
+Returns matching projects and proposals from a global search query.
+
+**Parameters:** `search` (required)
+
+<Warning>
+  The parameter is `search=`. Using `q=`, `query=`, or `term=` returns a 400 error.
+</Warning>
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/search?search=meta"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 15 },
+  "data": {
+    "projects": [
+      {
+        "slug": "metadao",
+        "name": "MetaDAO",
+        "imageUrl": "https://imagedelivery.net/...",
+        "symbol": "META"
+      }
+    ],
+    "proposals": [
+      {
+        "publicKey": "G33HJH2J2zRqqcHZKMggkQurvqe1cmaDtfBz3hgmuuAg",
+        "title": "Meta-PoW: The ORE Treasury Protocol",
+        "slug": "coal"
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `data.projects` | Matching ownership coin projects |
+| `data.proposals` | Matching proposals across all projects |
+| `projects[].slug` | Use with [Project](/api-reference/project/overview) endpoints for detailed data |
+| `proposals[].publicKey` | Use with [Project > Proposals](/api-reference/project/proposals) endpoints for market data |

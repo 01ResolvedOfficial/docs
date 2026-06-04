@@ -1,0 +1,894 @@
+---
+title: "Proposals"
+description: "Proposals, decision market data, trading analytics, and individual trades for a project."
+icon: "scale-balanced"
+---
+
+All endpoints scoped to a project accept a `slug` query parameter. Endpoints scoped to a specific proposal use a `{publicKey}` path parameter — the proposal's onchain public key.
+
+---
+
+## GET /v1/proposal
+
+Returns all proposals for a project.
+
+**Parameters:** `slug` (required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal?slug=metadao&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 37, "totalPages": 4 },
+  "data": [
+    {
+      "id": 11729,
+      "title": "Engage Groom Lake Security Initiative - $360,000 USDC",
+      "publicKey": "FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM",
+      "creationDate": "2026-05-15T03:43:13.000Z",
+      "endDate": "2026-05-18T03:43:13.000Z",
+      "totalTrade": 263,
+      "totalTradeVolume": "31067.19",
+      "totalUniqueTraders": 10,
+      "result": "approved",
+      "status": "resolved",
+      "netPassVolumeTilt": "22.71",
+      "netPassTraderTilt": "16.67",
+      "passAndFailTWAPSpread": "3.11",
+      "twapThreshold": "-3.00",
+      "twapThresholdMargin": "6.11",
+      "organizationSlug": "metadao",
+      "tokenSymbol": "META"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `publicKey` | Onchain proposal address. Used as `{publicKey}` in proposal-scoped endpoints |
+| `result` | Final outcome: `approved` or `rejected` |
+| `status` | Lifecycle state: `active`, `resolved`, etc. |
+| `netPassVolumeTilt` | Net volume bias toward pass market. Positive = more capital on pass |
+| `netPassTraderTilt` | Net trader count bias toward pass market |
+| `passAndFailTWAPSpread` | Difference between pass and fail TWAP at resolution (in %) |
+| `twapThreshold` | Minimum TWAP spread required to pass (in %). Negative = team-sponsored lower bar |
+| `twapThresholdMargin` | How far the TWAP spread was above the threshold at resolution |
+
+---
+
+## GET /v1/proposal/filter
+
+Returns a minimal list of proposals (id + title only) for a project. Useful for building dropdowns or search interfaces.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/filter?slug=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    { "id": 11729, "title": "Engage Groom Lake Security Initiative - $360,000 USDC" },
+    { "id": 535, "title": "Fund Futarchy applications research — Dr. Robin Hanson" }
+  ]
+}
+```
+</Accordion>
+
+<Warning>
+  Do not pass `limit` or `page` to this endpoint — they are not supported and will return a 400 error.
+</Warning>
+
+---
+
+## GET /v1/proposal/analytics
+
+Returns aggregate proposal outcome counts for a project.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/analytics?slug=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "defeated": 9,
+    "succeeded": 28,
+    "total": 37
+  }
+}
+```
+</Accordion>
+
+---
+
+## GET /v1/proposal/{publicKey}
+
+Returns full detail for a single proposal.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "id": 11729,
+    "title": "Engage Groom Lake Security Initiative - $360,000 USDC",
+    "publicKey": "FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM",
+    "creationDate": "2026-05-15T03:43:13.000Z",
+    "endDate": "2026-05-18T03:43:13.000Z",
+    "state": "succeeded",
+    "passTwap": "2.893608526547",
+    "failTwap": "2.806367224118",
+    "passOutcome": "2.838614794201",
+    "failOutcome": "2.753999542967",
+    "volume": "31067.19",
+    "orderCount": 263,
+    "isTeamSponsored": true,
+    "orderSummary": {
+      "passBuy": { "walletCount": 8, "totalVolume": "1606.55" },
+      "passSell": { "walletCount": 5, "totalVolume": "12000.90" },
+      "failBuy": { "walletCount": 5, "totalVolume": "5.78" },
+      "failSell": { "walletCount": 6, "totalVolume": "17453.96" }
+    },
+    "dao": {
+      "passedThresholdBps": "300",
+      "version": "0.6",
+      "teamSponsoredPassThresholdBps": "-300"
+    }
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `state` | `succeeded` or `failed` |
+| `passTwap` | Final TWAP price of the pass market |
+| `failTwap` | Final TWAP price of the fail market |
+| `passOutcome` / `failOutcome` | Final spot price of each market at close |
+| `isTeamSponsored` | Whether this proposal was submitted by the team (uses lower pass threshold) |
+| `orderSummary` | Breakdown of trade count and volume by market side and direction |
+
+---
+
+## GET /v1/proposal/{publicKey}/orders
+
+Returns individual trades for a specific proposal.
+
+**Parameters:** `publicKey` (path, required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../orders?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 263 },
+  "data": [
+    {
+      "orderId": 694147,
+      "trader": "AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5",
+      "timeStamp": "2026-05-18T01:51:23.000Z",
+      "marketType": "fail",
+      "direction": "sell",
+      "value": "194.13",
+      "price": "2.7473",
+      "size": "70.66",
+      "marketDirectionVolume": "17453.96",
+      "proposalTrades": 237,
+      "txHash": "5kgoEFrdvKiUUnz3..."
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `marketType` | Which market the trade was in: `pass` or `fail` |
+| `direction` | Trade direction: `buy` or `sell` |
+| `value` | USD value of the trade |
+| `price` | Token price at time of trade |
+| `size` | Token amount traded |
+| `marketDirectionVolume` | Total volume in this market+direction combination |
+| `marketDirectionConc` | This trade's share of total volume in its market+direction (%) |
+
+---
+
+## GET /v1/proposal/{publicKey}/orders/csv
+
+Returns all orders for a proposal as a CSV file download.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../orders/csv" \
+  -o orders.csv
+```
+
+Returns a `text/csv` file with the same fields as `/v1/proposal/{publicKey}/orders`. Use `-o` to save to a file.
+
+---
+
+## GET /v1/proposal/{publicKey}/orders/unique-traders/csv
+
+Returns the list of unique trader wallet addresses for a proposal as a CSV file download.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../orders/unique-traders/csv" \
+  -o unique-traders.csv
+```
+
+Returns a `text/csv` file with one wallet address per row.
+
+---
+
+## GET /v1/proposal/{publicKey}/orders/volume/csv
+
+Returns aggregated order volume data for a proposal as a CSV file download.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../orders/volume/csv" \
+  -o volume.csv
+```
+
+Returns a `text/csv` file with volume breakdown by market type and direction.
+
+---
+
+## GET /v1/proposal/{publicKey}/price-chart
+
+Returns 15-minute OHLC price and TWAP data for both pass and fail markets over the proposal's lifetime.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../price-chart"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "preTwap": "2026-05-16T03:45:00.000Z",
+    "prices": [
+      {
+        "timestamp": "2026-05-15T03:30:00.000Z",
+        "approvedPrice": "3.0900",
+        "rejectedPrice": "3.0900",
+        "spotPrice": "3.0900",
+        "approvedTwap": "2.9700",
+        "rejectedTwap": "2.8791"
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `preTwap` | Timestamp when the TWAP observation period began |
+| `approvedPrice` | Pass market spot price at this interval |
+| `rejectedPrice` | Fail market spot price at this interval |
+| `spotPrice` | Underlying token spot price at this interval |
+| `approvedTwap` | Rolling TWAP for the pass market |
+| `rejectedTwap` | Rolling TWAP for the fail market |
+
+---
+
+## GET /v1/proposal/{publicKey}/market-overview
+
+Returns a summary of market activity for a proposal.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../market-overview"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "marketType": "amm",
+    "netPassVolumeTilt": "22.71",
+    "netPassTraderTilt": "16.67",
+    "totalTradeVolume": "31067.19",
+    "totalTrade": 263,
+    "passPoolTVL": "7050.52",
+    "failPoolTVL": "6854.63"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `marketType` | Market mechanism: `amm` |
+| `netPassVolumeTilt` | Net volume bias toward pass market (%). Positive = more volume on pass side |
+| `netPassTraderTilt` | Net trader count bias toward pass (%) |
+| `passPoolTVL` | USD value locked in the pass market pool |
+| `failPoolTVL` | USD value locked in the fail market pool |
+
+---
+
+## GET /v1/proposal/{publicKey}/proposal-for-chart
+
+Returns metadata needed to render proposal status and staking progress charts.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../proposal-for-chart"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "proposalId": "FG93Keo...",
+    "proposalTitle": "Engage Groom Lake Security Initiative - $360,000 USDC",
+    "proposalStatus": "resolved",
+    "startDate": "2026-05-15T03:43:13.000Z",
+    "endDate": "2026-05-18T03:43:13.000Z",
+    "twapDelaySeconds": "86400",
+    "stakingProgress": {
+      "tokensStaked": 0,
+      "stakingRequirement": 0,
+      "percentage": 0,
+      "isMinimumMet": true
+    },
+    "slug": "metadao"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `twapDelaySeconds` | Seconds after proposal open before TWAP starts (86400 = 24 hours) |
+| `stakingProgress.tokensStaked` | Governance tokens staked to open this proposal |
+| `stakingProgress.stakingRequirement` | Minimum tokens required |
+| `stakingProgress.isMinimumMet` | Whether the staking requirement was satisfied |
+
+---
+
+## GET /v1/proposal/{publicKey}/threshold-chart
+
+Returns TWAP pass-edge data over the TWAP observation window.
+
+**Parameters:** `publicKey` (path, required), `timeInterval` (required: `15m`, `1h`, `4h`, `1d`, `max`)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../threshold-chart?timeInterval=1h"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "preTwap": "2026-05-16T03:45:00.000Z",
+    "threshold": -3,
+    "chartData": [
+      { "timestamp": "2026-05-17T03:30:00.000Z", "passEdge": 6.131 },
+      { "timestamp": "2026-05-17T03:45:00.000Z", "passEdge": 6.130 }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `threshold` | The required TWAP spread to pass (negative = team-sponsored lower bar) |
+| `chartData[].passEdge` | TWAP spread at this interval. Formula: `((passTwap - failTwap) / failTwap) × 100 - threshold` |
+
+<Warning>
+  `timeInterval` is required. Valid values are `15m`, `1h`, `4h`, `1d`, `max`. Omitting it returns a 400 error.
+</Warning>
+
+---
+
+## GET /v1/proposal/{publicKey}/flow-chart
+
+Returns cumulative and interval-level net pass volume tilt over time.
+
+**Parameters:** `publicKey` (path, required), `timeInterval` (required: `15m`, `1h`, `4h`, `1d`, `max`)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../flow-chart?timeInterval=1h"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "preTwap": "2026-05-16T03:45:00.000Z",
+    "chartData": [
+      {
+        "timestamp": "2026-05-17T03:30:00.000Z",
+        "netPassVolumeTilt": 0,
+        "cumulativeTilt": 7126.01
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `netPassVolumeTilt` | Net pass-aligned volume in this interval (USD). Positive = pass side had more volume |
+| `cumulativeTilt` | Running total of net pass-aligned volume from proposal start |
+
+<Warning>
+  `timeInterval` is required. Valid values are `15m`, `1h`, `4h`, `1d`, `max`.
+</Warning>
+
+---
+
+## GET /v1/proposal/{publicKey}/pass-edge
+
+Returns the final TWAP pass edge and outcome classification for a resolved proposal.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/FG93Keo.../pass-edge"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "proposalStatus": "succeeded",
+    "threshold": "-3",
+    "twapStartTime": "2026-05-16T03:43:13.000Z",
+    "passTwapPrice": "2.893608526547",
+    "failTwapPrice": "2.806367224118",
+    "approveRejectTwapDifference": "6.108691609538686085",
+    "proposalTwapStatus": "approve"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `threshold` | The required TWAP spread to pass |
+| `twapStartTime` | When the TWAP observation window opened |
+| `approveRejectTwapDifference` | Final spread between pass and fail TWAP (%). Formula: `((passTwap - failTwap) / failTwap) × 100` |
+| `proposalTwapStatus` | `approve` or `reject` |
+
+---
+
+## GET /v1/proposal/analytics/{publicKey}/trade-overview
+
+Returns trader composition statistics for a specific proposal.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/analytics/FG93Keo.../trade-overview"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "organizationName": "MetaDAO",
+    "totalUniqueTraders": 10,
+    "repeatTradersPercent": 80,
+    "largestTrade": { "value": "2978.67", "market": "fail", "direction": "sell" },
+    "avgTradeValues": "118.13"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalUniqueTraders` | Number of distinct wallets that traded on this proposal |
+| `repeatTradersPercent` | Percentage of traders who had previously traded on another proposal |
+| `largestTrade.value` | USD value of the single largest trade |
+| `avgTradeValues` | Average USD value per trade |
+
+---
+
+## GET /v1/proposal/analytics/{publicKey}/outcome-strength
+
+Returns a detailed breakdown of trader and volume alignment toward each outcome.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/analytics/FG93Keo.../outcome-strength"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "passThresholdClearance": 6.109,
+    "traderByEconomicDirection": {
+      "passAligned": 58.33,
+      "failAligned": 41.67,
+      "passAlignedTraders": 14,
+      "failAlignedTraders": 10,
+      "passBuyTraders": 8,
+      "passSellTraders": 5,
+      "failBuyTraders": 5,
+      "failSellTraders": 6
+    },
+    "volumeByEconomicDirection": {
+      "passAligned": 61.35,
+      "failAligned": 38.65
+    }
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `passThresholdClearance` | How far the final TWAP spread exceeded the pass threshold |
+| `traderByEconomicDirection.passAligned` | % of traders who were net pass-aligned (pass buyers + fail sellers) |
+| `traderByEconomicDirection.failAligned` | % of traders who were net fail-aligned (fail buyers + pass sellers) |
+| `volumeByEconomicDirection.passAligned` | % of total volume that was pass-aligned |
+
+---
+
+## GET /v1/proposal/analytics/{publicKey}/conviction-chart
+
+Returns hourly net pass-aligned capital flow over the proposal's lifetime.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/analytics/FG93Keo.../conviction-chart"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "preTwap": "2026-05-16T04:00:00.000Z",
+    "preTwapAccumulation": 7196.44,
+    "twapAccumulation": -142.61,
+    "chartData": [
+      { "timestamp": "2026-05-15T03:00:00.000Z", "netPassAlignedCapital": 500 },
+      { "timestamp": "2026-05-15T04:00:00.000Z", "netPassAlignedCapital": 0 }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `preTwapAccumulation` | Total net pass-aligned capital committed before TWAP window opened |
+| `twapAccumulation` | Net pass-aligned capital committed during TWAP window |
+| `chartData[].netPassAlignedCapital` | Net pass-aligned USD flow in this hour |
+
+---
+
+## GET /v1/proposal/analytics/{publicKey}/trade-frequency-chart
+
+Returns a histogram of how many trades each trader placed on this proposal.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/analytics/FG93Keo.../trade-frequency-chart"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "1": 3,
+    "2": 2,
+    "3-5": 3,
+    "6-10": 1,
+    "11-20": 0,
+    "21+": 1
+  }
+}
+```
+</Accordion>
+
+Each key is a trade-count bucket. The value is the number of traders who placed that many trades. Useful for distinguishing passive vs. active traders.
+
+---
+
+## GET /v1/proposal/filter/{publicKey}/traders
+
+Returns the list of trader wallet addresses for a specific proposal.
+
+**Parameters:** `publicKey` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/filter/FG93Keo.../traders"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    { "id": 694095, "trader": "2SDcKUdeJrjteTLGZ1ABsqneYLbB15bBgqEnyhbcm7ez" },
+    { "id": 693885, "trader": "4ARYaJ6ER7VgWDBZmisazgL7R6PwzjAJhwpknQV3f2EQ" }
+  ]
+}
+```
+</Accordion>
+
+Returns a flat list of all wallets that placed at least one trade on this proposal.
+
+---
+
+## GET /v1/proposal/comparable/{publicKey}/proposal-metrics-chart
+
+Compares this proposal's key metrics against the median across all comparable proposals for the same project.
+
+**Parameters:** `publicKey` (path, required), `slug` (query, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/comparable/FG93Keo.../proposal-metrics-chart?slug=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalUniqueTraders": { "current": 10, "median": "29.57", "diffPercentage": "-66.18" },
+    "totalUniqueRepeatTraders": { "current": 8, "median": "20.70", "diffPercentage": "-61.36" },
+    "netPassVolumeTilt": { "current": "22.71", "median": "9.71", "diffPercentage": "+133.93" },
+    "netPassTraderTilt": { "current": "16.67", "median": "7.72", "diffPercentage": "+115.86" },
+    "totalTradeVolume": { "current": "31067.19", "median": "172902.64", "diffPercentage": "-82.03" },
+    "twapThresholdMargin": { "current": "6.11", "median": "3.01", "diffPercentage": "+103.00" }
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `current` | This proposal's value |
+| `median` | Median value across all comparable proposals for this project |
+| `diffPercentage` | How much this proposal differs from the median (%) |
+
+<Warning>
+  Both `publicKey` (path) and `slug` (query) are required. Omitting `slug` returns a 400 error.
+</Warning>
+
+---
+
+## GET /v1/proposal/analytics/proposal-comparables
+
+Returns the pool of comparable proposals used for benchmark calculations for a project.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/proposal/analytics/proposal-comparables?slug=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "id": 6,
+      "title": "Migrate META Token",
+      "publicKey": "4grb3pea8ZSqE3ghx76Fn43Q97mAh64XjgwL9AXaB3Pe",
+      "slug": "metadao",
+      "totalUniqueTraders": 20,
+      "status": "approved",
+      "netPassVolumeTilt": "16.75",
+      "twapThresholdMargin": "3.90"
+    }
+  ]
+}
+```
+</Accordion>
+
+---
+
+## GET /v1/trading-activity/{daoSlug}
+
+Returns aggregate decision market trading statistics for a project.
+
+**Parameters:** `daoSlug` (path, required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalVolume": 6397397.76,
+    "totalTrades": 134848,
+    "totalUniqueTraders": 499
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalVolume` | Cumulative USD volume traded across all proposals |
+| `totalTrades` | Total individual trades placed |
+| `totalUniqueTraders` | Distinct wallet addresses that have traded |
+
+---
+
+## GET /v1/trading-activity/{daoSlug}/trading-activities
+
+Returns all individual trades across all proposals for a project, most recent first.
+
+**Parameters:** `daoSlug` (path, required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/metadao/trading-activities?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 134848 },
+  "data": [
+    {
+      "orderId": 694147,
+      "trader": "AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5",
+      "timeStamp": "2026-05-18T01:51:23.000Z",
+      "proposalName": "Engage Groom Lake Security Initiative - $360,000 USDC",
+      "proposalPublicKey": "FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM",
+      "marketType": "fail",
+      "direction": "sell",
+      "value": "194.13",
+      "price": "2.7473",
+      "size": "70.66",
+      "txHash": "5kgoEFrdvKiUUnz3..."
+    }
+  ]
+}
+```
+</Accordion>
+
+---
+
+## GET /v1/trading-activity/special-wallet
+
+Returns all decision market trades placed by a specific wallet address, across all projects.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `walletPublicKey` | string | **Yes** | Solana wallet address to look up |
+| `slug` | string | No | Filter to a specific project |
+| `limit` | number | No | Items per page |
+| `page` | number | No | Page number |
+| `sort` | string | No | Sort field: `timestamp`, `value`, `price`, `size`, `proposalVolumeConc`, `marketDirectionConc`, `proposalTradeConc` |
+| `order` | string | No | `ASC` or `DESC` (default `DESC`) |
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet?walletPublicKey=AWjCySKay...SC5&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 3616 },
+  "data": [
+    {
+      "orderId": 822890,
+      "trader": "AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5",
+      "timestamp": "2026-06-02T21:52:56.000Z",
+      "organizationName": "Jurassic Finance",
+      "organizationSlug": "jurassic-finance",
+      "proposalName": "Establish Legal Structure for First SPV",
+      "proposalPublicKey": "8M93PPtyJFthyy8MyiQ5ayxrg2KG7LwemoTEYo7ikc5j",
+      "marketType": "fail",
+      "direction": "sell",
+      "value": "96.71",
+      "price": "0.03783",
+      "size": "2556.61",
+      "marketDirectionConc": "28.87",
+      "proposalVolumeConc": "46.96",
+      "walletConc": "99.01",
+      "txHash": "tm4xjRaTCpt7..."
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `marketDirectionConc` | This trade's share of total volume in its market+direction for this proposal (%) |
+| `proposalVolumeConc` | This trade's share of total proposal volume (%) |
+| `walletConc` | This wallet's share of total volume in its market+direction for this proposal (%) |
+
+<Warning>
+  The parameter is `walletPublicKey`. Using `wallet`, `address`, or `walletAddress` returns a 400 error.
+</Warning>
+
+---
+
+## GET /v1/trading-activity/special-wallet/overview
+
+Returns aggregate trading statistics for a specific wallet address.
+
+**Parameters:** `walletPublicKey` (required), `slug` (optional)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/overview?walletPublicKey=AWjCySKay...SC5"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalVolume": 689702.94,
+    "totalTrades": 3616,
+    "totalUniqueProposals": 16,
+    "walletCreationTime": 1767999923
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalVolume` | Total USD traded by this wallet across all proposals |
+| `totalTrades` | Total trades placed by this wallet |
+| `totalUniqueProposals` | Number of distinct proposals this wallet has traded on |
+| `walletCreationTime` | Unix timestamp of when the wallet was created on-chain |

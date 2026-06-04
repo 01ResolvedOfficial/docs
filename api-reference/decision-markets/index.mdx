@@ -1,0 +1,136 @@
+---
+title: "Decision Markets"
+description: "Active, resolved, and live decision markets across all ownership coin projects."
+icon: "scale-balanced"
+---
+
+These endpoints return decision market data aggregated across **all** ownership coin projects. For proposal data scoped to a specific project, see [Project > Proposals](/api-reference/project/proposals).
+
+---
+
+## GET /v1/global-dashboard/overview/decision-markets
+
+Returns aggregate decision market statistics across all projects.
+
+**Parameters:** none
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/overview/decision-markets"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalProposals": 135,
+    "totalVolume": "14476115.71",
+    "totalTrades": 164846
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalProposals` | Total proposals ever created across all projects |
+| `totalVolume` | Cumulative USD trading volume across all decision markets |
+| `totalTrades` | Total individual trades placed across all decision markets |
+
+---
+
+## GET /v1/global-dashboard/decision-markets
+
+Returns a paginated list of all decision markets (proposals) across all projects, most recent first.
+
+**Parameters:** `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/decision-markets?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 116, "totalPages": 12 },
+  "data": [
+    {
+      "project": "Jurassic Finance",
+      "projectSlug": "jurassic-finance",
+      "proposalImageUrl": "https://imagedelivery.net/...",
+      "proposal": "Establish Legal Structure for First SPV",
+      "publicKey": "8M93PPtyJFthyy8MyiQ5ayxrg2KG7LwemoTEYo7ikc5j",
+      "status": "live",
+      "result": "",
+      "startDate": "2026-06-02T03:38:36.000Z",
+      "endDate": "2026-06-05T03:38:36.000Z"
+    },
+    {
+      "project": "Paystream",
+      "projectSlug": "paystream",
+      "proposal": "Restructure Paystream",
+      "publicKey": "2VmEeSdSfwDBWUYHH61iJCz8TwdmEqhTSmXWBgpHrWzN",
+      "status": "resolved",
+      "result": "approved",
+      "startDate": "2026-05-26T21:31:43.000Z",
+      "endDate": "2026-05-29T21:31:43.000Z"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `projectSlug` | The project's slug. Use with [Project > Proposals](/api-reference/project/proposals) endpoints for deeper data |
+| `publicKey` | The proposal's onchain public key |
+| `status` | Current state: `live` or `resolved` |
+| `result` | Outcome for resolved proposals: `approved` or `rejected`. Empty string if still live |
+
+---
+
+## GET /v1/global-dashboard/projects/decision-markets
+
+Returns currently **initiated and live** decision markets across all projects, with TWAP and staking status.
+
+**Parameters:** `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/projects/decision-markets?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 1 },
+  "data": [
+    {
+      "organizationName": "Jurassic Finance",
+      "organizationSlug": "jurassic-finance",
+      "organizationImageUrl": "https://imagedelivery.net/...",
+      "proposalId": 11805,
+      "proposalPublicKey": "8M93PPtyJFthyy8MyiQ5ayxrg2KG7LwemoTEYo7ikc5j",
+      "proposalTitle": "Establish Legal Structure for First SPV",
+      "proposalCreationDate": "2026-06-02T03:38:36.000Z",
+      "proposalEndDate": "2026-06-05T03:38:36.000Z",
+      "twapStartDelaySeconds": "86400",
+      "status": "live",
+      "passedThresholdBps": "3.00",
+      "stakingProgressPercentage": "104.46",
+      "thresholdPercentage": 0.34,
+      "proposalTwapStatus": "approve"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `status` | Only returns `live` proposals |
+| `stakingProgressPercentage` | How far along the staking requirement has been met (%) |
+| `thresholdPercentage` | Current TWAP spread relative to the pass threshold |
+| `proposalTwapStatus` | Current TWAP signal: `approve` or `reject` |
+| `twapStartDelaySeconds` | Seconds after market open before TWAP begins (86400 = 24 hours) |

@@ -24,23 +24,17 @@ curl -H "x-api-key: YOUR_API_KEY" \
 ## Endpoint Groups
 
 <CardGroup cols={2}>
-  <Card title="DAO" icon="building" href="/api-reference/dao">
-    Treasury, account registry, revenues, expenses, token supply, and project timeline for any tracked DAO.
+  <Card title="Project" icon="building" href="/api-reference/project/overview">
+    Token metrics, treasury, financials, movements, ICO data, and proposal analytics scoped to a single project.
   </Card>
-  <Card title="Proposals" icon="ballot" href="/api-reference/proposals">
-    Proposal lists, full proposal text, pass edge, market overview, orders, and conviction analytics.
+  <Card title="Decision Markets" icon="scale-balanced" href="/api-reference/decision-markets/index">
+    Aggregate decision market stats, all proposals across all projects, and live market TWAP status.
   </Card>
-  <Card title="Trading Activity" icon="arrows-rotate" href="/api-reference/trading-activity">
-    Aggregate trading stats and individual trades for a DAO or a specific wallet address.
+  <Card title="Ownership Coin Market" icon="globe" href="/api-reference/ownership-coin-market/index">
+    Global market cap, treasury totals, ICO launches, completed raises, and ecosystem-wide search.
   </Card>
-  <Card title="Global Dashboard" icon="globe" href="/api-reference/global-dashboard">
-    Ecosystem-wide totals, all proposals across all DAOs, ICO data, and project snapshots.
-  </Card>
-  <Card title="Project Overview" icon="chart-bar" href="/api-reference/project-overview">
-    Token metrics, ICO details, contributor stats, token distribution, and vesting schedules.
-  </Card>
-  <Card title="Legal Entities" icon="scale-balanced" href="/api-reference/legal-entities">
-    DAO and OpCo legal entity registrations, jurisdictions, and entity names.
+  <Card title="API Key" icon="key" href="/api-reference/api-key">
+    Look up details about the API key currently in use.
   </Card>
 </CardGroup>
 
@@ -56,10 +50,10 @@ The most useful endpoints for common use cases:
 
 | Use Case | Endpoint |
 |----------|----------|
-| Weekly ecosystem snapshot | `GET /global-dashboard/projects-launch` |
-| All active proposals right now | `GET /global-dashboard/decision-markets` |
-| Is this live proposal passing? | `GET /proposal/{key}/pass-edge` |
-| Full proposal text | `GET /proposal/{key}` → `content` field |
-| Treasury health for one project | `GET /dao/treasury/overview?slug=` |
-| All trades for one DAO ever | `GET /trading-activity/{slug}/trading-activities` |
-| Failed ICO history | `GET /global-dashboard/graveyard-launches` |
+| Weekly ecosystem snapshot | `GET /v1/global-dashboard/projects-launch` |
+| All active proposals right now | `GET /v1/global-dashboard/projects/decision-markets` |
+| Is this live proposal passing? | `GET /v1/proposal/{publicKey}/pass-edge` |
+| Full proposal text | `GET /v1/proposal/{publicKey}` → `content` field |
+| Treasury health for one project | `GET /v1/dao/treasury/overview?slug=` |
+| All trades for one DAO ever | `GET /v1/trading-activity/{daoSlug}/trading-activities` |
+| Failed ICO history | `GET /v1/global-dashboard/graveyard-launches` |

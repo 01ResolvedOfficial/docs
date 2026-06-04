@@ -1,0 +1,597 @@
+---
+title: "Overview"
+description: "Token metrics, supply, ICO details, contributor data, token distribution, and vesting schedules for a project."
+icon: "chart-bar"
+---
+
+All endpoints accept a `slug` query parameter to identify the project. See [Project Slugs](/guides/project-slugs) for valid values.
+
+---
+
+## GET /v1/url/{project}
+
+Returns the canonical URL for a project's page on 01Resolved.
+
+**Parameters:** `project` (path, required) — the project slug
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/url/solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": null
+}
+```
+</Accordion>
+
+<Note>
+  This endpoint is live but currently returns `null` for all projects. It is intended to resolve the canonical 01Resolved URL for a given project slug.
+</Note>
+
+---
+
+## GET /v1/project-overview
+
+Returns top-level token metrics and project description.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "baseMint": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta",
+    "tokenSymbol": "SOLO",
+    "tokenPrice": "0.5914",
+    "tokenPriceUSDChange24h": "-7.15",
+    "volumeChanged24h": "89493.68",
+    "totalSupply": "25799970.42",
+    "circulatingSupply": "11424310.94",
+    "icoPrice": 0.8,
+    "projectDescription": "Solomon is building a more composable dollar...",
+    "projectSubDescription": "The composable dollar that always earns"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `tokenPrice` | Current USD price of the token |
+| `tokenPriceUSDChange24h` | 24h price change %. Formula: `((price_now - price_24h_ago) / price_24h_ago) × 100` |
+| `volumeChanged24h` | 24h volume **change** percentage (not raw volume). Formula: `((vol_24h - vol_prev_24h) / vol_prev_24h) × 100` |
+| `totalSupply` | Total tokens in existence. Formula: `total minted - total burned` |
+| `circulatingSupply` | Tokens in circulation excluding locked team allocations. Formula: `total supply - performance package tokens` |
+| `icoPrice` | Token price at time of ICO |
+| `projectSubDescription` | Short one-line tagline for the project |
+
+---
+
+## GET /v1/dao/overview
+
+Returns onchain DAO configuration and governance parameters.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/overview?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "name": "Solomon",
+    "slug": "solomon",
+    "publicKey": "DzYtzoNvPbyFCzwZA6cSm9eDEEmxEB9f8AGkJXUXgnSA",
+    "quoteMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "baseMint": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta",
+    "spendingLimit": "100000000000",
+    "passedThresholdBps": "300",
+    "baseToStake": "1500000000000",
+    "twapStartDelaySeconds": "86400",
+    "teamSponsoredPassThresholdBps": "-300",
+    "version": "0.6",
+    "proposalCount": 0
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `publicKey` | Onchain DAO program address |
+| `quoteMint` | Quote token mint used in decision markets (typically USDC) |
+| `spendingLimit` | Monthly spend limit in raw token units. Divide by `10^6` for USDC value |
+| `passedThresholdBps` | TWAP pass threshold in basis points (300 = 3%) |
+| `baseToStake` | Governance tokens required to open a proposal. Divide by `10^6` |
+| `twapStartDelaySeconds` | Seconds after market open before TWAP starts (86400 = 24 hours) |
+| `teamSponsoredPassThresholdBps` | Pass threshold for team-sponsored proposals in basis points. Negative values lower the required pass edge |
+
+---
+
+## GET /v1/project-overview/legals
+
+Returns legal document links for a project.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/legals?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "id": 8,
+      "url": "https://drive.google.com/file/d/1B_Srbswswed132D8mNx6N4JdwqQBa7xb/view",
+      "type": "Founder Covenant",
+      "slug": "solomon"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `type` | Document type (e.g. `Founder Covenant`) |
+| `url` | Link to the legal document |
+
+---
+
+## GET /v1/project-overview/token-distribution
+
+Returns token allocation breakdown by category.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/token-distribution?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalSupply": 25799970.42,
+    "categories": [
+      { "allocation": "Public Sale/ICO", "amount": "9679243.31", "percentage": "37.52" },
+      { "allocation": "Team & Investors", "amount": "12900000", "percentage": "50.00" },
+      { "allocation": "Liquidity", "amount": "3220727.11", "percentage": "12.48" }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `allocation` | Category name (e.g. `Public Sale/ICO`, `Team & Investors`, `Liquidity`) |
+| `amount` | Raw token amount for this category |
+| `percentage` | Share of total supply as a percentage |
+
+---
+
+## GET /v1/dao/token-supply/overview
+
+Returns aggregate token supply statistics — total minted, burned, and net supply.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply/overview?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalMint": "25800002",
+    "totalBurn": "29.41",
+    "resultingSupply": "25799972.59",
+    "netChange": "1.75",
+    "symbol": "SOLO",
+    "publicKey": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalMint` | Cumulative tokens minted |
+| `totalBurn` | Cumulative tokens burned |
+| `resultingSupply` | Current net supply. Formula: `totalMint - totalBurn` |
+| `netChange` | Net supply change over the tracked period |
+
+---
+
+## GET /v1/dao/token-supply
+
+Returns the full mint and burn event ledger, linked to governance proposals where applicable.
+
+**Parameters:** `slug` (required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply?slug=solomon&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 6 },
+  "data": [
+    {
+      "id": 19589,
+      "timestamp": "2026-05-21T07:51:06.027Z",
+      "type": "Mint",
+      "amount": "1",
+      "resultingSupply": "25799972.83",
+      "change": "0.000004",
+      "priceAtTime": "1",
+      "usdValue": "1",
+      "signature": null,
+      "proposal": null
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `type` | `Mint` or `Burn` |
+| `amount` | Token amount of this event |
+| `resultingSupply` | Total supply after this event |
+| `change` | Percentage change to supply from this event |
+| `priceAtTime` | Token price (USD) at the time of the event |
+| `usdValue` | USD value of the mint or burn |
+| `signature` | Solana transaction hash (null if not recorded) |
+| `proposal` | Linked governance proposal, if applicable |
+
+---
+
+## GET /v1/dao/token-supply/chart
+
+Returns daily circulating supply history.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply/chart?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    { "period": "2026-05-28T00:00:00.000Z", "supply": 25799972.67, "interval": "day" },
+    { "period": "2026-05-29T00:00:00.000Z", "supply": 25799972.67, "interval": "day" }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `period` | Start of this time interval |
+| `supply` | Circulating supply on this date |
+| `interval` | Granularity of the data point (e.g. `day`) |
+
+---
+
+## GET /v1/project-overview/performance-package
+
+Returns team vesting and token lock data.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/performance-package?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalInPackage": 12900000,
+    "locked": 12900000,
+    "claimableNow": 0,
+    "claimed": 0,
+    "tokenSymbol": "SOLO",
+    "cliff": {
+      "timestamp": 1810150224,
+      "date": "2027-05-12T19:30:24.000Z",
+      "passed": false,
+      "daysRemaining": 343
+    }
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalInPackage` | Total tokens allocated to the team vesting program |
+| `locked` | Tokens not yet vested |
+| `claimableNow` | Tokens vested but not yet claimed |
+| `claimed` | Tokens already claimed by the team |
+| `cliff.passed` | Whether the vesting cliff date has been reached |
+| `cliff.daysRemaining` | Days until the cliff date |
+
+---
+
+## GET /v1/project-overview/tranche-ladder
+
+Returns the individual performance-gated vesting tranches.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/tranche-ladder?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "order": 0,
+      "tokens": 2580000,
+      "multiplier": 2,
+      "priceThreshold": "1.6",
+      "icoPrice": "0.8",
+      "cliff": {
+        "timestamp": 1810150224,
+        "passed": false,
+        "daysRemaining": 342
+      },
+      "state": "cliff-twap-pending"
+    },
+    {
+      "order": 1,
+      "tokens": 2580000,
+      "multiplier": 4,
+      "priceThreshold": "3.2",
+      "icoPrice": "0.8",
+      "cliff": {
+        "timestamp": 1810150224,
+        "passed": false,
+        "daysRemaining": 342
+      },
+      "state": "cliff-twap-pending"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `order` | Tranche index (0 = first to unlock) |
+| `tokens` | Tokens that unlock when this tranche is reached |
+| `multiplier` | Price multiple of ICO price required to unlock |
+| `priceThreshold` | Absolute token price (USD) required to unlock. Formula: `icoPrice × multiplier` |
+| `state` | Current tranche state: `cliff-twap-pending`, `unlocked`, `locked` |
+
+---
+
+## GET /v1/project-overview/unlock-schedule
+
+Returns the token unlock schedule chart data, showing projected cumulative unlocks over time alongside historical TWAP prices.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/unlock-schedule?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "scheduleData": [
+      { "date": "2026-03-06", "twap": 0.7745, "cumulativeUnlocked": "0" },
+      { "date": "2026-03-07", "twap": 0.7726, "cumulativeUnlocked": "0" }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `date` | Date of this data point |
+| `twap` | Token TWAP price on this date |
+| `cumulativeUnlocked` | Total tokens unlocked as of this date |
+
+---
+
+## GET /v1/project-overview/ico-details
+
+Returns ICO-specific details including raise timing and supply allocation.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-details?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "icoPrice": "0.8",
+    "unixTimestampStarted": 1763145002,
+    "secondsForLaunch": 345600,
+    "totalSupply": "25799970.42",
+    "icoSupply": 10000000
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `icoPrice` | Token price during the ICO in USD |
+| `unixTimestampStarted` | Unix timestamp when the ICO started |
+| `secondsForLaunch` | Duration of the ICO in seconds (345600 = 4 days) |
+| `icoSupply` | Tokens allocated to the ICO raise |
+
+---
+
+## GET /v1/project-overview/ico-contributor
+
+Returns aggregate ICO contributor statistics.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-contributor?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalContributors": 6604,
+    "totalTransactions": 8844,
+    "totalQuoteAmount": "102932673.08",
+    "averageContribution": "11638.70",
+    "medianContribution": "544",
+    "committedAmount": "102932673.08",
+    "minimumRaiseAmount": "2000000",
+    "fundsAccepted": "8000000"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalContributors` | Unique wallets that contributed |
+| `totalTransactions` | Total contribution transactions |
+| `totalQuoteAmount` | Total USDC committed by all contributors |
+| `averageContribution` | Average contribution per wallet in USDC |
+| `medianContribution` | Median contribution per wallet in USDC |
+| `minimumRaiseAmount` | Minimum raise threshold in USDC |
+| `fundsAccepted` | Total funds accepted (may be less than committed if oversubscribed) |
+
+---
+
+## GET /v1/project-overview/ico-contributor/chart
+
+Returns contributor count bucketed by contribution size.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-contributor/chart?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "0-10000": "5668",
+    "10000-100000": "726",
+    "100000-500000": "171",
+    "500000-1000000": "24",
+    "1000000-2000000": "11",
+    "2000000+": "4"
+  }
+}
+```
+</Accordion>
+
+Each key is a USDC contribution range. The value is the number of wallets that contributed within that range.
+
+---
+
+## GET /v1/project-overview/ico-contributor/ico-list
+
+Returns the list of other ICOs that contributors to this project also participated in.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-contributor/ico-list?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    { "organization": "Areal" },
+    { "organization": "Avici" },
+    { "organization": "Boltick" }
+  ]
+}
+```
+</Accordion>
+
+Useful for understanding investor base overlap across ownership coin projects.
+
+---
+
+## GET /v1/project-overview/ico-contributor/investors
+
+Returns per-wallet ICO contribution data with cross-project participation.
+
+**Parameters:** `slug` (required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-contributor/investors?slug=solomon&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": {
+    "totalItems": 6604,
+    "itemsPerPage": 10,
+    "totalPages": 661,
+    "currentPage": 1
+  },
+  "data": [
+    {
+      "funderAddr": "7TkbQFb2Le2kdVnVdzKMppTYVcVvS3M7aM9qLARQ5ZGB",
+      "totalContribution": 2680907,
+      "organizations": ["Avici", "Solomon"],
+      "organizationsConcat": "Avici, Solomon"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `funderAddr` | Contributor's Solana wallet address |
+| `totalContribution` | Total USDC contributed across all ICOs |
+| `organizations` | List of ICO projects this wallet participated in |

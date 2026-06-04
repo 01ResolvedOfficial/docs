@@ -1,0 +1,373 @@
+---
+title: "Movements"
+description: "Account registry, transaction movements, and classification data for a project."
+icon: "arrow-right-arrow-left"
+---
+
+Account registry endpoints use `slug`. Movement endpoints use `project` instead of `slug` — see warnings on individual endpoints.
+
+---
+
+## GET /v1/dao/account-registry
+
+Returns all wallets tracked for a DAO with balances, labels, and custody type. Powers the **Account Registry** tab.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/account-registry?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "address": "Bo24B7DDVtpa9VxZ4LN8FrAT7TM3cgkri41a5GjFg5Dk",
+      "name": "Team Performance Package",
+      "custodyType": "Program",
+      "chain": "Solana",
+      "isActive": true,
+      "entityType": "DAO",
+      "trackingMode": "full",
+      "notes": "Team will have a 18-month cliff and unlock tokens in equal tranches at performance milestones."
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `name` | Labeled wallet name (e.g. `Vault`, `FutarchyAMM`, `DAO Main`) |
+| `custodyType` | How the wallet is controlled (e.g. `Multi-sig`, `Program`) |
+| `isActive` | Whether this wallet is currently active |
+| `entityType` | Classification of the wallet (e.g. `DAO`) |
+| `trackingMode` | Level of tracking applied (`full` or `partial`) |
+| `notes` | Human-readable notes about the wallet's purpose |
+
+---
+
+## GET /v1/group
+
+Returns account registry groups and their subgroups. Powers the **Group** and **Sub-group** columns in the Account Registry tab.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/group?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Treasury",
+      "subgroups": [
+        { "id": 1, "name": "Main", "order": 0 },
+        { "id": 2, "name": "LP", "order": 1 },
+        { "id": 3, "name": "Vesting", "order": 2 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Operations",
+      "subgroups": [
+        { "id": 9, "name": "Payroll", "order": 0 },
+        { "id": 10, "name": "Security", "order": 1 },
+        { "id": 11, "name": "Infrastructure", "order": 2 },
+        { "id": 12, "name": "Legal", "order": 3 },
+        { "id": 13, "name": "Grants", "order": 4 },
+        { "id": 14, "name": "Other Expense", "order": 5 }
+      ]
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `name` | Top-level group label (e.g. `Treasury`, `Operations`) |
+| `subgroups[].name` | Sub-group label (e.g. `Main`, `LP`, `Payroll`, `Legal`) |
+| `subgroups[].order` | Display order within the group |
+
+---
+
+## GET /v1/movement
+
+Returns treasury movements for a project with classification status, category, and counterparty detail. Powers the **Movements** and **Classifications** tabs.
+
+**Parameters:** `project` (required), `limit`, `page`
+
+<Warning>
+  This endpoint uses `project=` not `slug=`. Using `slug` returns a 400 error.
+</Warning>
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/movement?project=solomon&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 56222 },
+  "data": [
+    {
+      "id": 19958999,
+      "signature": "2xYXpTEUv4tvYt5RNFeVxA6UsJqnmefgDy4vN2S4vbePU9ZC8wKcaGnxsrmpnTo5wwHneWenw1VrNHgu27SFjxdR",
+      "timestamp": "2026-06-04T00:01:25.000Z",
+      "from": "DzYtzoNvPbyFCzwZA6cSm9eDEEmxEB9f8AGkJXUXgnSA",
+      "fromName": "FutarchyAMM",
+      "to": "6awyHMshBGVjJ3ozdSJdyyDE1CTAXUwrpNMaRGMsb4sf",
+      "toName": "MetaDAO Multisig",
+      "amount": "102.058166",
+      "totalValue": 102.058166,
+      "tokenSymbol": "USDC",
+      "classifiedStatus": "Unclassified",
+      "categoryId": null,
+      "categoryName": null,
+      "subCategoryId": null,
+      "subCategoryName": null,
+      "entity": "DAO",
+      "proposalId": null,
+      "proposalTitle": null,
+      "canConfirmed": false
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `id` | Numeric movement ID. Used in `/v1/movement/{id}` |
+| `fromName` / `toName` | Labeled wallet names for source and destination |
+| `classifiedStatus` | Classification state: `Unclassified`, `Classified`, or `Needs Review` |
+| `categoryName` / `subCategoryName` | Classification labels once a movement has been reviewed |
+| `entity` | Entity type associated with this movement (e.g. `DAO`) |
+| `canConfirmed` | Whether this movement is eligible for manual confirmation |
+
+---
+
+## GET /v1/movement/export/csv
+
+Returns all movements for a project as a CSV file download.
+
+**Parameters:** `project` (required)
+
+<Warning>
+  This endpoint uses `project=` not `slug=`. Using `slug` returns a 400 error.
+</Warning>
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/movement/export/csv?project=solomon" \
+  -o movements.csv
+```
+
+Returns a `text/csv` file with the same fields as `/v1/movement`. Use `-o` to save to a file.
+
+---
+
+## GET /v1/movement/{id}
+
+Returns full detail for a single movement by its numeric ID.
+
+**Parameters:** `id` (path, required)
+
+<Note>
+  The `MOV-` prefix shown in the 01Resolved UI is a display convention only. Pass the numeric value after the prefix (e.g. use `19958999`, not `MOV-19958999`).
+</Note>
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/movement/19958999"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "id": 19958999,
+    "signature": "2xYXpTEUv4tvYt5RNFeVxA6UsJqnmefgDy4vN2S4vbePU9ZC8wKcaGnxsrmpnTo5wwHneWenw1VrNHgu27SFjxdR",
+    "from": "DzYtzoNvPbyFCzwZA6cSm9eDEEmxEB9f8AGkJXUXgnSA",
+    "fromName": "FutarchyAMM",
+    "to": "6awyHMshBGVjJ3ozdSJdyyDE1CTAXUwrpNMaRGMsb4sf",
+    "toName": "DAO Multisig",
+    "type": "INITIALIZE_ACCOUNT",
+    "source": "ASSOCIATED_TOKEN_PROGRAM",
+    "timestamp": "2026-06-04T00:01:25.000Z",
+    "amount": "102.058166",
+    "totalValue": "102.058166",
+    "description": null,
+    "categoryName": null,
+    "subCategoryName": null,
+    "classifiedStatus": "Unclassified",
+    "proposal": null,
+    "token": {
+      "symbol": "USDC",
+      "tokenPublicKey": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "usdPrice": "0.9996"
+    },
+    "classificationHistories": []
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `type` | Onchain instruction type (e.g. `INITIALIZE_ACCOUNT`, `TRANSFER`) |
+| `source` | Onchain program that executed this instruction |
+| `classificationHistories` | Audit trail of all classification changes made to this movement |
+
+---
+
+## GET /v1/movement/filters/token
+
+Returns the list of tokens present in a project's movements. Used to populate token filter dropdowns in the Movements and Classifications tabs.
+
+**Parameters:** `project` (required)
+
+<Warning>
+  This endpoint uses `project=` not `slug=`. Using `slug` returns a 400 error.
+</Warning>
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/movement/filters/token?project=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "publicKey": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "usdPrice": "0.9996",
+      "url": "https://coin-images.coingecko.com/..."
+    },
+    {
+      "publicKey": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta",
+      "symbol": "SOLO",
+      "name": "Solomon",
+      "usdPrice": "0.5912",
+      "url": "https://coin-images.coingecko.com/..."
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `publicKey` | Token mint address on Solana |
+| `symbol` | Token ticker symbol |
+| `usdPrice` | Current USD price of the token |
+
+---
+
+## GET /v1/category
+
+Returns movement classification categories and subcategories. Powers the **Category** and **Sub-category** columns in the Movements and Classifications tabs.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/category?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Revenue",
+      "order": 1,
+      "subCategories": [
+        {
+          "id": 1,
+          "name": "Protocol fees",
+          "direction": "Inflow",
+          "description": "Fees earned from protocol usage (trading, minting, etc.)",
+          "order": 1
+        },
+        {
+          "id": 2,
+          "name": "Trading fees",
+          "direction": "Inflow",
+          "description": "Fees from trading activity on the protocol",
+          "order": 2
+        },
+        {
+          "id": 3,
+          "name": "Interest / Yield",
+          "direction": "Inflow",
+          "description": "Yield earned on held assets",
+          "order": 3
+        }
+      ]
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `name` | Top-level category (e.g. `Revenue`, `Expense`) |
+| `subCategories[].name` | Subcategory label (e.g. `Protocol fees`, `Payroll`) |
+| `subCategories[].direction` | Whether this subcategory is an `Inflow` or `Outflow` |
+| `subCategories[].description` | Human-readable description of the subcategory |
+
+---
+
+## GET /v1/dao/movements
+
+Returns treasury transactions with labeled source and destination wallets. A simpler alternative to `/v1/movement` that uses `slug` and returns less classification detail.
+
+**Parameters:** `slug` (required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/movements?slug=solomon&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 8473 },
+  "data": [
+    {
+      "address": "98SPcyUZ2rqM2dgjCqqSXS4gJrNTLSNUAAVCF38xYj9u",
+      "signature": "422ENs8CGqzPqvcvqWsSameFRWVK2nVcv5z377AqFoXoA8A9PTpNjcdtUEnSHCobk5Ms7hBzeHnYQVV4kQieFPjC",
+      "timestamp": "2026-05-30T19:18:09.000Z",
+      "amount": "100000",
+      "value": "99953.15",
+      "treasury": { "name": "DAO Main", "address": "98SPcy...", "project": "solomon" },
+      "relatedTreasury": { "name": "Expense 1", "address": "BCNsaG...", "project": "solomon" },
+      "token": { "symbol": "USDC", "decimals": 6 }
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `signature` | Solana transaction hash |
+| `amount` | Raw token amount. Divide by `10^decimals` for human-readable value |
+| `value` | USD value at time of transaction |
+| `treasury.name` | Labeled name of the source wallet |
+| `relatedTreasury.name` | Labeled name of the destination wallet (if a known DAO wallet) |
+| `token.symbol` | Token transferred |
