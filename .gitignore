@@ -1,0 +1,20 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Claude Code local tooling
+.claude/
+
+# Mintlify / node build output
+.mintlify/
+.next/
+node_modules/

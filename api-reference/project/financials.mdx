@@ -37,7 +37,7 @@ curl -H "x-api-key: YOUR_KEY" \
 |-------|-------------|
 | `baseMintCurrentPrice` | Current USD price of the project's governance token |
 | `totalBalance` | Total treasury value in USD across all wallets |
-| `netAssetValue` | NAV (AS): non-native asset value divided by adjusted supply. Per-token non-native backing in USD |
+| `netAssetValue` | NAV per Adjusted Supply (NAV/AS). Formula: `(Treasury Stables + LP Value (non-native side) + Other Non-Native Holdings) ÷ (Total Supply − Protocol-Controlled Tokens − Unvested Allocations)`. If NAV/AS > spot price, the project is trading at a relative discount. If NAV/AS < spot price, it is trading at a relative premium. |
 | `spendingLimit` | Monthly spend limit in USDC |
 | `monthOfRunway` | Months of runway. Formula: `treasury value / (monthly spend limit + other monthly expenses)` |
 

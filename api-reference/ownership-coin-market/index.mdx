@@ -173,10 +173,10 @@ curl -H "x-api-key: YOUR_KEY" \
 | `launchState` | ICO state: `Complete`, `Live`, etc. |
 | `marketCap` | Current market cap in USD. Formula: `tokenUsdPrice × circulatingSupply` |
 | `fdv` | Fully diluted valuation in USD. Formula: `tokenUsdPrice × totalSupply` |
-| `netAssetValue` | Per-token non-native treasury backing in USD |
+| `netAssetValue` | NAV per Adjusted Supply (NAV/AS). Formula: `(Treasury Stables + LP Value (non-native side) + Other Non-Native Holdings) ÷ (Total Supply − Protocol-Controlled Tokens − Unvested Allocations)`. If NAV/AS > spot price, the project is trading at a relative discount. If NAV/AS < spot price, it is trading at a relative premium. |
 | `monthsOfRunway` | Months of runway at current spend rate |
-| `mNAV` | Market cap / NAV ratio. Indicates how much premium the market applies over treasury backing |
-| `premDisc` | Premium or discount to NAV (%). Positive = trading above NAV |
+| `mNAV` | Fully Diluted Market Cap ÷ Net Asset Value. Indicates whether the token trades at a premium or discount to its non-native asset backing |
+| `premDisc` | Spot Premium / Discount to NAV (%). Formula: `(Spot Price − NAV/AS) ÷ NAV/AS`. Positive = trading above NAV/AS (premium). Negative = trading below (discount). |
 
 ---
 
