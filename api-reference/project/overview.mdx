@@ -152,6 +152,59 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
+## GET /v1/legal-entity
+
+Returns the registered legal entities behind a project, with their legal names and jurisdictions. Complements `/v1/project-overview/legals`, which returns document links rather than entity records.
+
+**Parameters:** `project`, `type`
+
+<Warning>
+  This endpoint uses `project=` not `slug=`. Passing `slug` is silently ignored and returns entities for **all** projects.
+</Warning>
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/legal-entity?project=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "id": 3,
+      "project": "metadao",
+      "type": "DAO",
+      "legalName": "MetaDAO LLC",
+      "entityName": "MetaDAO",
+      "jurisdiction": "Marshall Islands"
+    },
+    {
+      "id": 4,
+      "project": "metadao",
+      "type": "OpCo",
+      "legalName": "Organization Technology LLC",
+      "entityName": "MetaDAO OpCo",
+      "jurisdiction": "Wyoming"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `type` | `DAO` or `OpCo`. Filterable via the `type` parameter |
+| `legalName` | Registered legal name of the entity (e.g. `MetaDAO LLC`) |
+| `entityName` | Display name used across 01Resolved (e.g. `MetaDAO`) |
+| `jurisdiction` | Where the entity is incorporated (e.g. `Marshall Islands`, `Wyoming`) |
+
+<Note>
+  Not every project has recorded legal entities. Projects without them return an empty array. The `DAO` / `OpCo` split here matches the `entityType` field used throughout the movement and account endpoints.
+</Note>
+
+---
+
 ## GET /v1/project-overview/token-distribution
 
 Returns token allocation breakdown by category.
