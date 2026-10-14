@@ -156,15 +156,15 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns the registered legal entities behind a project, with their legal names and jurisdictions. Complements `/v1/project-overview/legals`, which returns document links rather than entity records.
 
-**Parameters:** `project`, `type`
+**Parameters:** `slug`, `type`
 
 <Warning>
-  This endpoint uses `project=` not `slug=`. Passing `slug` is silently ignored and returns entities for **all** projects.
+  Pass the project as `slug`. Without it, or with `project=` instead, this endpoint returns entities for **all** projects.
 </Warning>
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/legal-entity?project=metadao"
+  "https://api.01resolved.com/v1/legal-entity?slug=metadao"
 ```
 
 <Accordion title="Example Response">

@@ -177,7 +177,7 @@ Returns individual trades for a specific proposal.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../orders?limit=10"
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/orders?limit=10"
 ```
 
 <Accordion title="Example Response">
@@ -221,9 +221,13 @@ Returns all orders for a proposal as a CSV file download.
 
 **Parameters:** `publicKey` (path, required)
 
+<Note>
+  CSV exports are not available on every plan. If your plan does not include this endpoint, it returns `403`.
+</Note>
+
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../orders/csv" \
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/orders/csv" \
   -o orders.csv
 ```
 
@@ -237,9 +241,13 @@ Returns the list of unique trader wallet addresses for a proposal as a CSV file 
 
 **Parameters:** `publicKey` (path, required)
 
+<Note>
+  CSV exports are not available on every plan. If your plan does not include this endpoint, it returns `403`.
+</Note>
+
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../orders/unique-traders/csv" \
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/orders/unique-traders/csv" \
   -o unique-traders.csv
 ```
 
@@ -253,9 +261,13 @@ Returns aggregated order volume data for a proposal as a CSV file download.
 
 **Parameters:** `publicKey` (path, required)
 
+<Note>
+  CSV exports are not available on every plan. If your plan does not include this endpoint, it returns `403`.
+</Note>
+
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../orders/volume/csv" \
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/orders/volume/csv" \
   -o volume.csv
 ```
 
@@ -271,7 +283,7 @@ Returns 15-minute OHLC price and TWAP data for both pass and fail markets over t
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../price-chart"
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/price-chart"
 ```
 
 <Accordion title="Example Response">
@@ -313,7 +325,7 @@ Returns a summary of market activity for a proposal.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../market-overview"
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/market-overview"
 ```
 
 <Accordion title="Example Response">
@@ -350,14 +362,14 @@ Returns metadata needed to render proposal status and staking progress charts.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../proposal-for-chart"
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/proposal-for-chart"
 ```
 
 <Accordion title="Example Response">
 ```json
 {
   "data": {
-    "proposalId": "FG93Keo...",
+    "proposalId": "FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM",
     "proposalTitle": "Engage Groom Lake Security Initiative - $360,000 USDC",
     "proposalStatus": "resolved",
     "startDate": "2026-05-15T03:43:13.000Z",
@@ -392,7 +404,7 @@ Returns TWAP pass-edge data over the TWAP observation window.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../threshold-chart?timeInterval=1h"
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/threshold-chart?timeInterval=1h"
 ```
 
 <Accordion title="Example Response">
@@ -429,7 +441,7 @@ Returns cumulative and interval-level net pass volume tilt over time.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../flow-chart?timeInterval=1h"
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/flow-chart?timeInterval=1h"
 ```
 
 <Accordion title="Example Response">
@@ -468,7 +480,7 @@ Returns the final TWAP pass edge and outcome classification for a resolved propo
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/FG93Keo.../pass-edge"
+  "https://api.01resolved.com/v1/proposal/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/pass-edge"
 ```
 
 <Accordion title="Example Response">
@@ -504,7 +516,7 @@ Returns trader composition statistics for a specific proposal.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/analytics/FG93Keo.../trade-overview"
+  "https://api.01resolved.com/v1/proposal/analytics/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/trade-overview"
 ```
 
 <Accordion title="Example Response">
@@ -538,7 +550,7 @@ Returns a detailed breakdown of trader and volume alignment toward each outcome.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/analytics/FG93Keo.../outcome-strength"
+  "https://api.01resolved.com/v1/proposal/analytics/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/outcome-strength"
 ```
 
 <Accordion title="Example Response">
@@ -582,7 +594,7 @@ Returns hourly net pass-aligned capital flow over the proposal's lifetime.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/analytics/FG93Keo.../conviction-chart"
+  "https://api.01resolved.com/v1/proposal/analytics/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/conviction-chart"
 ```
 
 <Accordion title="Example Response">
@@ -617,7 +629,7 @@ Returns a histogram of how many trades each trader placed on this proposal.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/analytics/FG93Keo.../trade-frequency-chart"
+  "https://api.01resolved.com/v1/proposal/analytics/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/trade-frequency-chart"
 ```
 
 <Accordion title="Example Response">
@@ -647,7 +659,7 @@ Returns the list of trader wallet addresses for a specific proposal.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/filter/FG93Keo.../traders"
+  "https://api.01resolved.com/v1/proposal/filter/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/traders"
 ```
 
 <Accordion title="Example Response">
@@ -673,7 +685,7 @@ Compares this proposal's key metrics against the median across all comparable pr
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/proposal/comparable/FG93Keo.../proposal-metrics-chart?slug=metadao"
+  "https://api.01resolved.com/v1/proposal/comparable/FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM/proposal-metrics-chart?slug=metadao"
 ```
 
 <Accordion title="Example Response">
@@ -819,7 +831,7 @@ Returns all decision market trades placed by a specific wallet address, across a
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/trading-activity/special-wallet?walletPublicKey=AWjCySKay...SC5&limit=10"
+  "https://api.01resolved.com/v1/trading-activity/special-wallet?walletPublicKey=AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5&limit=10"
 ```
 
 <Accordion title="Example Response">
@@ -870,7 +882,7 @@ Returns aggregate trading statistics for a specific wallet address.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/trading-activity/special-wallet/overview?walletPublicKey=AWjCySKay...SC5"
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/overview?walletPublicKey=AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5"
 ```
 
 <Accordion title="Example Response">

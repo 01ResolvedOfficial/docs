@@ -4,7 +4,7 @@ description: "Account registry, transaction movements, and classification data f
 icon: "arrow-right-arrow-left"
 ---
 
-Account registry endpoints use `slug`. Movement endpoints use `project` instead of `slug` — see warnings on individual endpoints.
+Every endpoint on this page identifies the project with `slug`, except the detail endpoints that take a numeric `id` in the path.
 
 ---
 
@@ -558,15 +558,11 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns treasury movements for a project with classification status, category, and counterparty detail. Powers the **Movements** and **Classifications** tabs.
 
-**Parameters:** `project` (required), `limit`, `page`
-
-<Warning>
-  This endpoint uses `project=` not `slug=`. Using `slug` returns a 400 error.
-</Warning>
+**Parameters:** `slug` (required), `limit`, `page`
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/movement?project=solomon&limit=10"
+  "https://api.01resolved.com/v1/movement?slug=solomon&limit=10"
 ```
 
 <Accordion title="Example Response">
@@ -615,17 +611,13 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns movements collapsed into time buckets, with per-bucket classification summaries and nested sub-periods. Powers the grouped view of the Movements tab.
 
-**Parameters:** `project` (required), `groupBy` (required), `limit`, `page`, `classifiedStatus`, `entityType`, `startDate`, `endDate`, `categoryIds`, `minValue`, `maxValue`
+**Parameters:** `slug` (required), `groupBy` (required), `limit`, `page`, `classifiedStatus`, `entityType`, `startDate`, `endDate`, `categoryIds`, `minValue`, `maxValue`
 
 `groupBy` accepts `none`, `day`, `week`, `month`, or `quarter`.
 
-<Warning>
-  This endpoint uses `project=` not `slug=`. Passing `slug` returns `200` with **zero results** rather than an error, so a wrong parameter name fails silently here.
-</Warning>
-
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/movement/grouped?project=solomon&groupBy=month&limit=10"
+  "https://api.01resolved.com/v1/movement/grouped?slug=solomon&groupBy=month&limit=10"
 ```
 
 <Accordion title="Example Response">
@@ -695,15 +687,15 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns all movements for a project as a CSV file download.
 
-**Parameters:** `project` (required)
+**Parameters:** `slug` (required)
 
-<Warning>
-  This endpoint uses `project=` not `slug=`. Using `slug` returns a 400 error.
-</Warning>
+<Note>
+  CSV exports are not available on every plan. If your plan does not include this endpoint, it returns `403`.
+</Note>
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/movement/export/csv?project=solomon" \
+  "https://api.01resolved.com/v1/movement/export/csv?slug=solomon" \
   -o movements.csv
 ```
 
@@ -769,17 +761,17 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns classified movements that provide context for a given movement — either transactions from around the same time, or other transactions involving the same wallet.
 
-**Parameters:** `id` (path, required), `project` (required), `tab` (required), `limit`, `page`, `entityType`
+**Parameters:** `id` (path, required), `slug` (required), `tab` (required), `limit`, `page`, `entityType`
 
 `tab` accepts `around-this-time` or `same-wallet`.
 
 <Warning>
-  This endpoint uses `project=` not `slug=`, and `tab` is required. Omitting `tab` returns a 400 error.
+  `tab` is required. Omitting it returns a 400 error.
 </Warning>
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/movement/19958999/surrounding?project=solomon&tab=same-wallet"
+  "https://api.01resolved.com/v1/movement/19958999/surrounding?slug=solomon&tab=same-wallet"
 ```
 
 <Accordion title="Example Response">
@@ -806,15 +798,11 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns the entity types present in a project's movements. Used to populate the entity filter dropdown alongside `/v1/movement/filters/token`.
 
-**Parameters:** `project` (required)
-
-<Warning>
-  This endpoint uses `project=` not `slug=`. Using `slug` returns a 400 error.
-</Warning>
+**Parameters:** `slug` (required)
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/movement/filters/entity?project=solomon"
+  "https://api.01resolved.com/v1/movement/filters/entity?slug=solomon"
 ```
 
 <Accordion title="Example Response">
@@ -833,15 +821,11 @@ Returns a flat array of entity types. Projects with a separate operating company
 
 Returns the list of tokens present in a project's movements. Used to populate token filter dropdowns in the Movements and Classifications tabs.
 
-**Parameters:** `project` (required)
-
-<Warning>
-  This endpoint uses `project=` not `slug=`. Using `slug` returns a 400 error.
-</Warning>
+**Parameters:** `slug` (required)
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/movement/filters/token?project=solomon"
+  "https://api.01resolved.com/v1/movement/filters/token?slug=solomon"
 ```
 
 <Accordion title="Example Response">
