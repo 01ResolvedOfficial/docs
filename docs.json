@@ -127,5 +127,31 @@
       "x": "https://x.com/01Resolved",
       "telegram": "https://t.me/Official01Resolved"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/api-reference/dao",
+      "destination": "/api-reference/project/financials"
+    },
+    {
+      "source": "/api-reference/proposals",
+      "destination": "/api-reference/project/proposals"
+    },
+    {
+      "source": "/api-reference/trading-activity",
+      "destination": "/api-reference/project/proposals"
+    },
+    {
+      "source": "/api-reference/global-dashboard",
+      "destination": "/api-reference/ownership-coin-market"
+    },
+    {
+      "source": "/api-reference/project-overview",
+      "destination": "/api-reference/project/overview"
+    },
+    {
+      "source": "/api-reference/legal-entities",
+      "destination": "/api-reference/project/overview"
+    }
+  ]
 }
