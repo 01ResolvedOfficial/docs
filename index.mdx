@@ -10,23 +10,29 @@ description: "Structured intelligence for ownership coins and decision markets o
 ## What you can build
 
 <Columns cols={2}>
-  <Card title="Treasury Dashboards" icon="vault">
-    Real-time treasury monitoring for any tracked DAO: balances, NAV, runway, and account registry.
+  <Card title="Treasury Dashboards" icon="vault" href="/api-reference/project/financials">
+    NAV, NAV/AS, runway range, monthly allowance, asset breakdown, and the account registry for any tracked project.
   </Card>
-  <Card title="Proposal Alerts" icon="bell">
+  <Card title="Valuation Screens" icon="scale-unbalanced" href="/guides/nav-premium-discount">
+    Rank every ownership coin by premium or discount to NAV/AS in one call, and compare each with its own history.
+  </Card>
+  <Card title="Proposal Alerts" icon="bell" href="/api-reference/decision-markets/index">
     Monitor live and initiated proposals across the entire ecosystem. Track pass edge in real time.
   </Card>
-  <Card title="Decision Market Analytics" icon="chart-line">
+  <Card title="Decision Market Analytics" icon="chart-line" href="/api-reference/project/proposals">
     Decision market trading tools including pass edge, economic trader and volume alignment, and conviction over time tracking.
   </Card>
-  <Card title="ICO Research Tools" icon="magnifying-glass">
-    Historical fundraising, participation, and return data.
+  <Card title="ICO & Launch Research" icon="rocket" href="/api-reference/ownership-coin-market/launches">
+    Live and completed raises with returns, every contributing wallet, and the projects that were liquidated or wound down.
   </Card>
-  <Card title="Portfolio Trackers" icon="coins">
-    Token price, NAV per token, mNAV, premium/discount, and runway for all 12+ ownership coins in one call.
+  <Card title="Wallet Analytics" icon="wallet" href="/api-reference/wallet-analytics">
+    Holdings, ICO participation, and decision market trading for any wallet, refreshed on demand.
   </Card>
-  <Card title="Governance Research" icon="landmark">
-    Full proposal text, trade-level data, and wallet-level participation across all MetaDAO ecosystem projects.
+  <Card title="Operating Metrics" icon="chart-simple" href="/api-reference/project/overview">
+    Daily volume, transactions, and active users from projects that publish a Growth Feed.
+  </Card>
+  <Card title="Governance Research" icon="landmark" href="/api-reference/project/proposals">
+    Full proposal text, trade-level data, and wallet-level participation across every tracked project.
   </Card>
 </Columns>
 
@@ -73,6 +79,6 @@ All endpoints are prefixed with `/v1/`.
     Every endpoint with real example responses.
   </Card>
   <Card title="Use Case Guides" icon="map" href="/guides/use-cases">
-    Copy-paste recipes for common integrations.
+    Copy-paste recipes for common integrations, plus a NAV/AS premium and discount guide.
   </Card>
 </CardGroup>

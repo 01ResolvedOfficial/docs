@@ -25,15 +25,18 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 <CardGroup cols={2}>
   <Card title="Project" icon="building" href="/api-reference/project/overview">
-    Token metrics, financials, account registry, movements, ICO data, and decision market analytics scoped to a single project.
+    Overview, holders and tokenomics, ICO, financials, account registry, movements, and decision markets for a single project.
   </Card>
-  <Card title="Ownership Coin Market" icon="globe" href="/api-reference/ownership-coin-market/index">
-    Global market cap, treasury totals, ICO launches, completed raises, and ecosystem-wide search.
+  <Card title="Market Overview" icon="globe" href="/api-reference/ownership-coin-market/index">
+    Every ownership coin with price, NAV/AS, premium/discount, and runway, plus market-wide market cap and treasury charts, and search.
+  </Card>
+  <Card title="Launches" icon="rocket" href="/api-reference/ownership-coin-market/launches">
+    Live and recent ICOs, completed raises with returns, and liquidated or wound-down projects.
   </Card>
   <Card title="Decision Markets Overview" icon="scale-balanced" href="/api-reference/decision-markets/index">
     Aggregate decision market stats, all proposals across all projects, and live market TWAP status.
   </Card>
-  <Card title="Trader Details" icon="wallet" href="/api-reference/trader-details">
+  <Card title="Wallet Analytics" icon="wallet" href="/api-reference/wallet-analytics">
     Holdings, decision market activity, and ICO participation for any wallet, with on-demand refresh.
   </Card>
   <Card title="API Key" icon="key" href="/api-reference/api-key">
@@ -53,10 +56,14 @@ The most useful endpoints for common use cases:
 
 | Use Case | Endpoint |
 |----------|----------|
-| Weekly ecosystem snapshot | `GET /v1/global-dashboard/projects-launch` |
-| All active proposals right now | `GET /v1/global-dashboard/projects/decision-markets` |
+| Every ownership coin: price, NAV/AS, premium/discount, runway | `GET /v1/global-dashboard/projects-launch` |
+| All live and upcoming proposals right now | `GET /v1/global-dashboard/projects/decision-markets` |
 | Is this live proposal passing? | `GET /v1/proposal/{publicKey}/pass-edge` |
 | Full proposal text | `GET /v1/proposal/{publicKey}` → `content` field |
 | Treasury health for one project | `GET /v1/dao/treasury/overview?slug=` |
-| All trades for one DAO ever | `GET /v1/trading-activity/{daoSlug}/trading-activities` |
+| How a project's NAV/AS is built | `GET /v1/dao/treasury/nav-as-breakdown?slug=` |
+| Live and recent ICOs | `GET /v1/global-dashboard/recent-launches` |
+| Every contributor to a project's ICO | `GET /v1/project-overview/ico-contributor/investors?slug=` |
+| A wallet's ownership coin holdings | `GET /v1/trading-activity/special-wallet/holdings?walletPublicKey=` |
+| All trades for one project ever | `GET /v1/trading-activity/{slug}/trading-activities` |
 | Liquidated / wound-down projects | `GET /v1/global-dashboard/graveyard-launches` |

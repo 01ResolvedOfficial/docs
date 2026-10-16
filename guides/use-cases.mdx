@@ -15,7 +15,7 @@ curl -H "x-api-key: YOUR_KEY" \
   "https://api.01resolved.com/v1/global-dashboard/projects-launch"
 ```
 
-Returns every ownership coin with `tokenUsdPrice`, `treasuryValue`, `netAssetValue`, `mNAV`, `premDisc`, and `monthsOfRunway` for each.
+Returns every ownership coin with `tokenUsdPrice`, `treasuryValue`, `netAssetValue` (NAV/AS), `mNAV`, `premDisc`, and `monthsOfRunway` for each. `premDisc` is a ratio: multiply by 100 for a percentage. For screens built on these fields, see [NAV/AS Premium & Discount](/guides/nav-premium-discount).
 
 ---
 
@@ -23,11 +23,10 @@ Returns every ownership coin with `tokenUsdPrice`, `treasuryValue`, `netAssetVal
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/global-dashboard/decision-markets?limit=50"
+  "https://api.01resolved.com/v1/global-dashboard/projects/decision-markets"
 ```
 
-Filter on `status` field for `live` proposals. Sort by `volume` to prioritize by significance.
-
+Returns every proposal that is `live` (trading) or `initiated` (opened, not yet trading), across all projects. `proposalTwapStatus` shows which way a live market is currently leaning. Pass `proposalPublicKey` to `/v1/proposal/{publicKey}/pass-edge` for the exact margin. For every proposal including resolved ones, use `/v1/global-dashboard/decision-markets`.
 ---
 
 ## 3. Check if a live proposal is passing
@@ -84,23 +83,32 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## 7. Track a wallet's decision market activity
+## 7. Look up a wallet
 
 ```bash
-# All trades by this wallet
+# Ownership coin holdings, with value and holder rank
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/holdings?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS"
+
+# Every decision market trade by this wallet
 curl -H "x-api-key: YOUR_KEY" \
   "https://api.01resolved.com/v1/trading-activity/special-wallet?walletPublicKey=AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5"
 
-# Summary stats for this wallet
+# ICOs this wallet took part in
 curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/trading-activity/special-wallet/overview?walletPublicKey=AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5"
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/ico-participation?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS"
 ```
 
+Holdings come from a saved snapshot. Check `holdingsLastUpdate` and refresh it if needed. See [Wallet Analytics](/api-reference/wallet-analytics#keeping-holdings-current).
 ---
 
 ## 8. Ownership coin ICO history
 
 ```bash
+# Live and recent launches
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/recent-launches"
+
 # All completed ICOs with return data
 curl -H "x-api-key: YOUR_KEY" \
   "https://api.01resolved.com/v1/global-dashboard/completed-launches/info"
@@ -123,3 +131,20 @@ curl -H "x-api-key: YOUR_KEY" \
 curl -H "x-api-key: YOUR_KEY" \
   "https://api.01resolved.com/v1/dao/token-supply?slug=metadao"
 ```
+
+---
+
+## 10. Operating metrics for a project
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/growth-feed?slug=laso-finance"
+```
+
+Daily volume, transactions, and active users, for projects that publish a Growth Feed. Each metric's `semantics` tells you whether daily values can be added together. See [`/v1/growth-feed`](/api-reference/project/overview).
+
+---
+
+## 11. Screen every coin by premium or discount to NAV/AS
+
+See the [NAV/AS Premium & Discount](/guides/nav-premium-discount) guide for a full screen in Python, plus the checks to run before trusting a discount.

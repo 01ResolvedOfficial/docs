@@ -312,7 +312,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | `proposalAddress` | Onchain public key of that proposal. Pass to `/v1/proposal/{publicKey}` |
 ---
 
-## GET /v1/account/{id}
+## GET /v1/account/\{id\}
 
 Returns full detail for a single account, including notes, group assignment, and an audit trail of edits.
 
@@ -366,7 +366,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | `logs` | Audit trail of edits, with `action`, `createdAt`, and `changedBy` |
 ---
 
-## GET /v1/account/{id}/balance/onchain
+## GET /v1/account/\{id\}/balance/onchain
 
 Returns current onchain token holdings for a single account, with live USD prices.
 
@@ -421,7 +421,7 @@ curl -H "x-api-key: YOUR_KEY" \
 </Warning>
 ---
 
-## GET /v1/account/{id}/balance/offchain
+## GET /v1/account/\{id\}/balance/offchain
 
 Returns manually recorded off-chain holdings for a single account, such as exchange or bank balances. Same response shape as the onchain endpoint.
 
@@ -501,7 +501,7 @@ curl -H "x-api-key: YOUR_KEY" \
 </Note>
 ---
 
-## GET /v1/counterparty/{id}
+## GET /v1/counterparty/\{id\}
 
 Returns full detail for a single counterparty, including its address list and an audit trail of edits.
 

@@ -1,0 +1,174 @@
+---
+title: "ICO"
+description: "ICO details, contributor statistics, and the full list of participating wallets for a project."
+icon: "rocket"
+---
+
+These endpoints cover a project's ownership coin ICO: the raise itself, contributor statistics, and every participating wallet. They match the **ICO Details** and **ICO Contributors** sections of a project's Overview tab. All endpoints take `slug`.
+
+---
+
+## GET /v1/project-overview/ico-details
+
+Returns ICO-specific details including raise timing and supply allocation.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-details?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "icoPrice": "0.8",
+    "unixTimestampStarted": 1763145002,
+    "secondsForLaunch": 345600,
+    "totalSupply": "25799970.42",
+    "icoSupply": 10000000
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `icoPrice` | Token price during the ICO in USD |
+| `unixTimestampStarted` | Unix timestamp when the ICO started |
+| `secondsForLaunch` | Duration of the ICO in seconds (345600 = 4 days) |
+| `icoSupply` | Tokens allocated to the ICO raise |
+---
+
+## GET /v1/project-overview/ico-contributor
+
+Returns aggregate ICO contributor statistics.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-contributor?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalContributors": 6604,
+    "totalTransactions": 8844,
+    "totalQuoteAmount": "102932673.08",
+    "averageContribution": "11638.70",
+    "medianContribution": "544",
+    "committedAmount": "102932673.08",
+    "minimumRaiseAmount": "2000000",
+    "fundsAccepted": "8000000"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalContributors` | Unique wallets that contributed |
+| `totalTransactions` | Total contribution transactions |
+| `totalQuoteAmount` | Total USDC committed by all contributors |
+| `averageContribution` | Average contribution per wallet in USDC |
+| `medianContribution` | Median contribution per wallet in USDC |
+| `minimumRaiseAmount` | Minimum raise threshold in USDC |
+| `fundsAccepted` | Total funds accepted (may be less than committed if oversubscribed) |
+---
+
+## GET /v1/project-overview/ico-contributor/chart
+
+Returns contributor count bucketed by contribution size.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-contributor/chart?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "0-10000": "5668",
+    "10000-100000": "726",
+    "100000-500000": "171",
+    "500000-1000000": "24",
+    "1000000-2000000": "11",
+    "2000000+": "4"
+  }
+}
+```
+</Accordion>
+
+Each key is a USDC contribution range. The value is the number of wallets that contributed within that range.
+---
+
+## GET /v1/project-overview/ico-contributor/ico-list
+
+Returns the list of other ICOs that contributors to this project also participated in.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-contributor/ico-list?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    { "organization": "Areal" },
+    { "organization": "Avici" },
+    { "organization": "Boltick" }
+  ]
+}
+```
+</Accordion>
+
+Useful for understanding investor base overlap across ownership coin projects.
+---
+
+## GET /v1/project-overview/ico-contributor/investors
+
+Returns per-wallet ICO contribution data with cross-project participation.
+
+**Parameters:** `slug` (required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/ico-contributor/investors?slug=solomon&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": {
+    "totalItems": 6604,
+    "itemsPerPage": 10,
+    "totalPages": 661,
+    "currentPage": 1
+  },
+  "data": [
+    {
+      "funderAddr": "7TkbQFb2Le2kdVnVdzKMppTYVcVvS3M7aM9qLARQ5ZGB",
+      "totalContribution": 2680907,
+      "organizations": ["Avici", "Solomon"],
+      "organizationsConcat": "Avici, Solomon"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `funderAddr` | Contributor's Solana wallet address |
+| `totalContribution` | Total USDC contributed across all ICOs |
+| `organizations` | List of ICO projects this wallet participated in |

@@ -10,7 +10,7 @@ All endpoints scoped to a project accept a `slug` query parameter. Endpoints sco
 
 ## GET /v1/proposal
 
-Returns all proposals for a project.
+Returns the project's decision market index: every proposal, with its outcome and the trading statistics shown in the **Proposals** table on a project's page. Start here, then pass a proposal's `publicKey` to the proposal-scoped endpoints below.
 
 **Parameters:** `slug` (required), `limit`, `page`
 
@@ -22,24 +22,28 @@ curl -H "x-api-key: YOUR_KEY" \
 <Accordion title="Example Response">
 ```json
 {
-  "meta": { "totalItems": 37, "totalPages": 4 },
+  "meta": {
+    "totalItems": 40,
+    "totalPages": 40
+  },
   "data": [
     {
-      "id": 11729,
-      "title": "Engage Groom Lake Security Initiative - $360,000 USDC",
-      "publicKey": "FG93KeoUdUmBtTcxWhJZicc6ef824qccpFdesbw2RJjM",
-      "creationDate": "2026-05-15T03:43:13.000Z",
-      "endDate": "2026-05-18T03:43:13.000Z",
-      "totalTrade": 263,
-      "totalTradeVolume": "31067.19",
-      "totalUniqueTraders": 10,
-      "result": "approved",
+      "id": 11839,
+      "title": "Treasury Utilization For Ownerships Tokens",
+      "publicKey": "Fy5NzNUqnawZuZrXaXgEi1eGPi9gjgwNQ6BgM63mFCLG",
+      "creationDate": "2026-09-06T03:38:35.000Z",
+      "endDate": "2026-09-09T03:38:35.000Z",
       "status": "resolved",
-      "netPassVolumeTilt": "22.71",
-      "netPassTraderTilt": "16.67",
-      "passAndFailTWAPSpread": "3.11",
-      "twapThreshold": "-3.00",
-      "twapThresholdMargin": "6.11",
+      "result": "approved",
+      "totalTrade": 1192,
+      "totalTradeVolume": "143230.157837999970000000",
+      "totalUniqueTraders": 8,
+      "netPassVolumeTilt": "14.72243940822185384900",
+      "netPassTraderTilt": "40.00000000000000000000",
+      "passAndFailTWAPSpread": "7.80981931657763091800",
+      "twapThreshold": "-3.0000000000000000",
+      "twapThresholdMargin": "10.80981931657763091800",
+      "twapAndFinalOutcomeSpread": "2.47329739471260735500",
       "organizationSlug": "metadao",
       "tokenSymbol": "META"
     }
@@ -50,15 +54,17 @@ curl -H "x-api-key: YOUR_KEY" \
 
 | Field | Description |
 |-------|-------------|
-| `publicKey` | Onchain proposal address. Used as `{publicKey}` in proposal-scoped endpoints |
-| `result` | Final outcome: `approved` or `rejected` |
-| `status` | Lifecycle state: `active`, `resolved`, etc. |
-| `netPassVolumeTilt` | Net volume bias toward pass market. Positive = more capital on pass |
-| `netPassTraderTilt` | Net trader count bias toward pass market |
-| `passAndFailTWAPSpread` | Difference between pass and fail TWAP at resolution (in %) |
-| `twapThreshold` | Minimum TWAP spread required to pass (in %). Negative = team-sponsored lower bar |
-| `twapThresholdMargin` | How far the TWAP spread was above the threshold at resolution |
-
+| `publicKey` | Onchain proposal address. Used as the `{publicKey}` path parameter on every proposal-scoped endpoint |
+| `creationDate` / `endDate` | When the decision market opened and closed. Shown as **Start Date** and **End Date** |
+| `status` | Lifecycle state, e.g. `live` or `resolved` |
+| `result` | Final outcome once resolved, e.g. `approved` or `rejected` |
+| `totalTradeVolume` / `totalTrade` / `totalUniqueTraders` | USD volume, number of trades, and distinct trading wallets across both markets |
+| `netPassVolumeTilt` | Net volume bias toward the pass market in %. Positive = more capital on pass |
+| `netPassTraderTilt` | Net trader count bias toward the pass market in % |
+| `passAndFailTWAPSpread` | Difference between the pass and fail TWAPs in % |
+| `twapThreshold` | Spread required to pass, in %. Negative = a lower bar for team-sponsored proposals |
+| `twapThresholdMargin` | How far the spread finished above (positive) or below (negative) the threshold |
+| `twapAndFinalOutcomeSpread` | Spread between the TWAP and the final outcome, in % |
 ---
 
 ## GET /v1/proposal/filter
@@ -114,7 +120,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/{publicKey}
+## GET /v1/proposal/\{publicKey\}
 
 Returns full detail for a single proposal.
 
@@ -169,7 +175,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/{publicKey}/orders
+## GET /v1/proposal/\{publicKey\}/orders
 
 Returns individual trades for a specific proposal.
 
@@ -215,7 +221,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/{publicKey}/orders/csv
+## GET /v1/proposal/\{publicKey\}/orders/csv
 
 Returns all orders for a proposal as a CSV file download.
 
@@ -235,7 +241,7 @@ Returns a `text/csv` file with the same fields as `/v1/proposal/{publicKey}/orde
 
 ---
 
-## GET /v1/proposal/{publicKey}/orders/unique-traders/csv
+## GET /v1/proposal/\{publicKey\}/orders/unique-traders/csv
 
 Returns the list of unique trader wallet addresses for a proposal as a CSV file download.
 
@@ -255,7 +261,7 @@ Returns a `text/csv` file with one wallet address per row.
 
 ---
 
-## GET /v1/proposal/{publicKey}/orders/volume/csv
+## GET /v1/proposal/\{publicKey\}/orders/volume/csv
 
 Returns aggregated order volume data for a proposal as a CSV file download.
 
@@ -275,7 +281,7 @@ Returns a `text/csv` file with volume breakdown by market type and direction.
 
 ---
 
-## GET /v1/proposal/{publicKey}/price-chart
+## GET /v1/proposal/\{publicKey\}/price-chart
 
 Returns 15-minute OHLC price and TWAP data for both pass and fail markets over the proposal's lifetime.
 
@@ -317,7 +323,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/{publicKey}/market-overview
+## GET /v1/proposal/\{publicKey\}/market-overview
 
 Returns a summary of market activity for a proposal.
 
@@ -354,7 +360,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/{publicKey}/proposal-for-chart
+## GET /v1/proposal/\{publicKey\}/proposal-for-chart
 
 Returns metadata needed to render proposal status and staking progress charts.
 
@@ -396,7 +402,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/{publicKey}/threshold-chart
+## GET /v1/proposal/\{publicKey\}/threshold-chart
 
 Returns TWAP pass-edge data over the TWAP observation window.
 
@@ -433,7 +439,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/{publicKey}/flow-chart
+## GET /v1/proposal/\{publicKey\}/flow-chart
 
 Returns cumulative and interval-level net pass volume tilt over time.
 
@@ -472,7 +478,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/{publicKey}/pass-edge
+## GET /v1/proposal/\{publicKey\}/pass-edge
 
 Returns the final TWAP pass edge and outcome classification for a resolved proposal.
 
@@ -508,7 +514,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/analytics/{publicKey}/trade-overview
+## GET /v1/proposal/analytics/\{publicKey\}/trade-overview
 
 Returns trader composition statistics for a specific proposal.
 
@@ -542,7 +548,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/analytics/{publicKey}/outcome-strength
+## GET /v1/proposal/analytics/\{publicKey\}/outcome-strength
 
 Returns a detailed breakdown of trader and volume alignment toward each outcome.
 
@@ -586,7 +592,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/analytics/{publicKey}/conviction-chart
+## GET /v1/proposal/analytics/\{publicKey\}/conviction-chart
 
 Returns hourly net pass-aligned capital flow over the proposal's lifetime.
 
@@ -621,7 +627,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/proposal/analytics/{publicKey}/trade-frequency-chart
+## GET /v1/proposal/analytics/\{publicKey\}/trade-frequency-chart
 
 Returns a histogram of how many trades each trader placed on this proposal.
 
@@ -651,7 +657,7 @@ Each key is a trade-count bucket. The value is the number of traders who placed 
 
 ---
 
-## GET /v1/proposal/filter/{publicKey}/traders
+## GET /v1/proposal/filter/\{publicKey\}/traders
 
 Returns the list of trader wallet addresses for a specific proposal.
 
@@ -677,7 +683,7 @@ Returns a flat list of all wallets that placed at least one trade on this propos
 
 ---
 
-## GET /v1/proposal/comparable/{publicKey}/proposal-metrics-chart
+## GET /v1/proposal/comparable/\{publicKey\}/proposal-metrics-chart
 
 Compares this proposal's key metrics against the median across all comparable proposals for the same project.
 
@@ -747,11 +753,11 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/trading-activity/{daoSlug}
+## GET /v1/trading-activity/\{slug\}
 
 Returns aggregate decision market trading statistics for a project.
 
-**Parameters:** `daoSlug` (path, required)
+**Parameters:** `slug` (path, required)
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
@@ -778,11 +784,11 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
-## GET /v1/trading-activity/{daoSlug}/trading-activities
+## GET /v1/trading-activity/\{slug\}/trading-activities
 
 Returns all individual trades across all proposals for a project, most recent first.
 
-**Parameters:** `daoSlug` (path, required), `limit`, `page`
+**Parameters:** `slug` (path, required), `limit`, `page`
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \

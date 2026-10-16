@@ -1,0 +1,229 @@
+---
+title: "Holders & Tokenomics"
+description: "Token holders, supply distribution, the team performance package, and the unlock schedule for a project."
+icon: "users"
+---
+
+These endpoints cover who holds a project's token and how its supply is allocated and unlocked. They match the **Holders**, **Token Distribution**, and **Team Performance Package** sections of a project's Overview tab. All endpoints take `slug`, except `/v1/project-overview/token-holders`, which takes the token's mint as `baseMint`.
+
+---
+
+## GET /v1/project-overview/token-holders
+
+Returns the token's holders ranked by balance. Powers the **Holders** table on a project's Overview tab.
+
+**Parameters:** `baseMint` (required), `limit`, `page`
+
+<Warning>
+  This endpoint takes the token's mint address as `baseMint`, not a `slug`. Get a project's mint from the `baseMint` field of `/v1/project-overview` or `/v1/project-overview/market-metrics`.
+</Warning>
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/token-holders?baseMint=SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 3066, "itemsPerPage": 3, "totalPages": 1022, "currentPage": 1 },
+  "data": [
+    {
+      "owner": "Bo24B7DDVtpa9VxZ4LN8FrAT7TM3cgkri41a5GjFg5Dk",
+      "balance": "12900000",
+      "percentageOfTotalSupply": "50.00010655",
+      "rank": 1,
+      "percentageOfWallet": "99.9999958845433763441684"
+    },
+    {
+      "owner": "98SPcyUZ2rqM2dgjCqqSXS4gJrNTLSNUAAVCF38xYj9u",
+      "balance": "2375659.487229",
+      "percentageOfTotalSupply": "9.20800213",
+      "rank": 2,
+      "percentageOfWallet": "99.99931895993716501152662"
+    },
+    {
+      "owner": "DzYtzoNvPbyFCzwZA6cSm9eDEEmxEB9f8AGkJXUXgnSA",
+      "balance": "1666531.500819",
+      "percentageOfTotalSupply": "6.45943819",
+      "rank": 3,
+      "percentageOfWallet": "50.1213993168474525071791"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `owner` | Holder's wallet address |
+| `balance` | Tokens held, already adjusted for decimals |
+| `percentageOfTotalSupply` | Share of total supply held by this wallet |
+| `rank` | Position by balance, where 1 is the largest holder |
+| `percentageOfWallet` | Share of this wallet's total value held in this token |
+
+Balances are refreshed every 30 minutes. `meta.totalItems` gives the total number of holders.
+
+<Note>
+  The largest holders are often the project's own accounts, such as treasury wallets, the team vesting program, and liquidity pools. Cross-reference `owner` against `/v1/account?slug=` to separate them from outside holders.
+</Note>
+---
+
+## GET /v1/project-overview/token-distribution
+
+Returns token allocation breakdown by category.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/token-distribution?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalSupply": 25799970.42,
+    "categories": [
+      { "allocation": "Public Sale/ICO", "amount": "9679243.31", "percentage": "37.52" },
+      { "allocation": "Team & Investors", "amount": "12900000", "percentage": "50.00" },
+      { "allocation": "Liquidity", "amount": "3220727.11", "percentage": "12.48" }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `allocation` | Category name (e.g. `Public Sale/ICO`, `Team & Investors`, `Liquidity`) |
+| `amount` | Raw token amount for this category |
+| `percentage` | Share of total supply as a percentage |
+---
+
+## GET /v1/project-overview/performance-package
+
+Returns team vesting and token lock data.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/performance-package?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalInPackage": 12900000,
+    "locked": 12900000,
+    "claimableNow": 0,
+    "claimed": 0,
+    "tokenSymbol": "SOLO",
+    "cliff": {
+      "timestamp": 1810150224,
+      "date": "2027-05-12T19:30:24.000Z",
+      "passed": false,
+      "daysRemaining": 343
+    }
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalInPackage` | Total tokens allocated to the team vesting program |
+| `locked` | Tokens not yet vested |
+| `claimableNow` | Tokens vested but not yet claimed |
+| `claimed` | Tokens already claimed by the team |
+| `cliff.passed` | Whether the vesting cliff date has been reached |
+| `cliff.daysRemaining` | Days until the cliff date |
+---
+
+## GET /v1/project-overview/tranche-ladder
+
+Returns the individual performance-gated vesting tranches.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/tranche-ladder?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "order": 0,
+      "tokens": 2580000,
+      "multiplier": 2,
+      "priceThreshold": "1.6",
+      "icoPrice": "0.8",
+      "cliff": {
+        "timestamp": 1810150224,
+        "passed": false,
+        "daysRemaining": 342
+      },
+      "state": "cliff-twap-pending"
+    },
+    {
+      "order": 1,
+      "tokens": 2580000,
+      "multiplier": 4,
+      "priceThreshold": "3.2",
+      "icoPrice": "0.8",
+      "cliff": {
+        "timestamp": 1810150224,
+        "passed": false,
+        "daysRemaining": 342
+      },
+      "state": "cliff-twap-pending"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `order` | Tranche index (0 = first to unlock) |
+| `tokens` | Tokens that unlock when this tranche is reached |
+| `multiplier` | Price multiple of ICO price required to unlock |
+| `priceThreshold` | Absolute token price (USD) required to unlock. Formula: `icoPrice × multiplier` |
+| `state` | Current tranche state: `cliff-twap-pending`, `unlocked`, `locked` |
+---
+
+## GET /v1/project-overview/unlock-schedule
+
+Returns the token unlock schedule chart data, showing projected cumulative unlocks over time alongside historical TWAP prices.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/unlock-schedule?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "scheduleData": [
+      { "date": "2026-03-06", "twap": 0.7745, "cumulativeUnlocked": "0" },
+      { "date": "2026-03-07", "twap": 0.7726, "cumulativeUnlocked": "0" }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `date` | Date of this data point |
+| `twap` | Token TWAP price on this date |
+| `cumulativeUnlocked` | Total tokens unlocked as of this date |

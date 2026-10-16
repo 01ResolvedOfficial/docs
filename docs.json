@@ -41,11 +41,6 @@
             "pages": [
               "index",
               "essentials/authentication",
-              {
-                "type": "link",
-                "title": "API Reference",
-                "href": "https://01resolved.com/docs/api-reference/introduction"
-              },
               "essentials/rate-limits"
             ]
           },
@@ -69,10 +64,24 @@
           {
             "group": "Project",
             "pages": [
-              "api-reference/project/overview",
-              "api-reference/project/financials",
-              "api-reference/project/account-registry",
-              "api-reference/project/movements",
+              {
+                "group": "Overview",
+                "icon": "chart-bar",
+                "pages": [
+                  "api-reference/project/overview",
+                  "api-reference/project/holders",
+                  "api-reference/project/ico"
+                ]
+              },
+              {
+                "group": "Financials",
+                "icon": "dollar-sign",
+                "pages": [
+                  "api-reference/project/financials",
+                  "api-reference/project/account-registry",
+                  "api-reference/project/movements"
+                ]
+              },
               "api-reference/project/proposals"
             ]
           },
@@ -80,8 +89,9 @@
             "group": "Ownership Coin Market",
             "pages": [
               "api-reference/ownership-coin-market/index",
+              "api-reference/ownership-coin-market/launches",
               "api-reference/decision-markets/index",
-              "api-reference/trader-details"
+              "api-reference/wallet-analytics"
             ]
           },
           {
@@ -98,7 +108,8 @@
           {
             "group": "Recipes",
             "pages": [
-              "guides/use-cases"
+              "guides/use-cases",
+              "guides/nav-premium-discount"
             ]
           },
           {
@@ -156,6 +167,10 @@
     {
       "source": "/api-reference/legal-entities",
       "destination": "/api-reference/project/overview"
+    },
+    {
+      "source": "/api-reference/trader-details",
+      "destination": "/api-reference/wallet-analytics"
     }
   ]
 }
