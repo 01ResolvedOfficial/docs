@@ -75,6 +75,157 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
+## GET /v1/project-overview/market-metrics
+
+Returns a project's market data in one call: price changes, liquidity, volume, market cap, FDV, return since ICO, and NAV/AS with the premium or discount to it.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/market-metrics?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "baseMint": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta",
+    "tokenSymbol": "SOLO",
+    "tokenPrice": "0.741050591747177600",
+    "decimals": 6,
+    "priceChange24h": { "pct": "5.000629587750912283", "deltaUsd": "0.03529235519501644471" },
+    "priceChange7d": { "pct": "-19.765708283802723185", "deltaUsd": "-0.18255772571439251832" },
+    "liquidity": { "usd": "4591038.4401311073783517214092", "poolCount": 3 },
+    "volume24h": { "usd": "110399.775189682393", "changePct": "139.1231101646548" },
+    "marketCap": { "usd": "7799028.0216813553480079183968", "circulatingSupply": "10524285.532643000000000000" },
+    "fdv": { "usd": "19119064.5240207933444319132672", "totalSupply": "25799945.019872000000000000" },
+    "icoReturn": { "pct": "-7.3686760316028", "icoPrice": "0.8" },
+    "nav": {
+      "usd": "5396726.63921106",
+      "adjustedSupply": "8455340.842669298999280154",
+      "navPerAdjustedShareUsd": "0.638262459152071838",
+      "snapshotAt": "2026-10-16T05:00:17.407Z"
+    },
+    "discount": { "pct": "16.104367587537457607" }
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `priceChange24h` / `priceChange7d` | Price change over 24 hours and 7 days, as a percentage and in USD |
+| `liquidity.usd` / `liquidity.poolCount` | Combined liquidity across the token's pools, and how many pools |
+| `volume24h.usd` / `volume24h.changePct` | Trading volume over the last 24 hours, and its change from the 24 hours before |
+| `marketCap.usd` | Formula: `tokenPrice × marketCap.circulatingSupply` |
+| `fdv.usd` | Fully diluted valuation. Formula: `tokenPrice × fdv.totalSupply` |
+| `icoReturn.pct` | Return since the ICO. Formula: `(tokenPrice − icoPrice) ÷ icoPrice × 100` |
+| `nav` | NAV, adjusted supply, and NAV/AS from the latest snapshot. See `/v1/dao/treasury/nav-as-breakdown` for the full breakdown |
+| `discount.pct` | Premium or discount to NAV/AS in %. Formula: `(tokenPrice − nav.navPerAdjustedShareUsd) ÷ nav.navPerAdjustedShareUsd × 100` |
+
+<Warning>
+  Despite its name, a **positive** `discount.pct` means the token trades at a **premium** to NAV/AS. Negative means a discount.
+</Warning>
+
+---
+
+## GET /v1/growth-feed
+
+Returns a project's operating metrics, such as volume, transactions, and active users, as daily history. Powers the **Operating Performance** section of a project's Overview tab.
+
+**Parameters:** `slug` (required), `from`, `to`
+
+`from` and `to` are UTC dates (`YYYY-MM-DD`), both inclusive. `to` defaults to yesterday and `from` to 89 days before `to`. The maximum range is 366 days.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/growth-feed?slug=laso-finance&from=2026-10-12&to=2026-10-14"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "slug": "laso-finance",
+    "status": "available",
+    "asOf": "2026-10-16T05:56:24.007Z",
+    "expectedObservationDate": "2026-10-14",
+    "latestObservationDate": "2026-10-14",
+    "sourceGeneratedAt": "2026-10-15T06:30:12.567Z",
+    "range": { "from": "2026-10-12", "to": "2026-10-14" },
+    "metrics": [
+      {
+        "metricId": "protocol_volume_usd",
+        "unit": "USD",
+        "semantics": "flow",
+        "definition": "Settled economic notional that UTC day, counted once per economic event.",
+        "latest": {
+          "date": "2026-10-14",
+          "value": "29014.92",
+          "methodologyVersion": "1.0",
+          "sourceGeneratedAt": "2026-10-15T06:30:12.567Z"
+        },
+        "freshness": "current",
+        "observations": [
+          { "date": "2026-10-12", "value": "12741.07", "methodologyVersion": "1.0", "sourceGeneratedAt": "2026-10-14T06:30:12.948Z" },
+          { "date": "2026-10-13", "value": "30528.98", "methodologyVersion": "1.0", "sourceGeneratedAt": "2026-10-15T06:30:12.567Z" },
+          { "date": "2026-10-14", "value": "29014.92", "methodologyVersion": "1.0", "sourceGeneratedAt": "2026-10-15T06:30:12.567Z" }
+        ]
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+**Which metrics a project reports.** Each project chooses the 2 to 4 metrics that best describe its growth, so the set differs from project to project. Every metric comes from one standard catalog, identified by `metricId`, so the same ID means the same thing on every project. Each value covers one completed UTC day (00:00 to 23:59 UTC).
+
+| `metricId` | Category | Unit | Type |
+|------------|----------|------|------|
+| `new_users` | Acquisition | count | `flow` |
+| `app_downloads` | Acquisition | count | `flow` |
+| `total_users` | Adoption | count | `stock` |
+| `daily_active_users` | Engagement | count | `interval_unique` |
+| `transactions` | Activity | count | `flow` |
+| `protocol_volume_usd` | Activity | USD | `flow` |
+| `value_held_usd` | Capital | USD | `stock` |
+| `net_inflows_usd` | Capital | USD | `flow` |
+| `supplied_assets_usd` | Lending | USD | `stock` |
+| `outstanding_borrows_usd` | Lending | USD | `stock` |
+| `stablecoin_supply_usd` | Stablecoin | USD | `stock` |
+| `stablecoin_mint_volume_usd` | Stablecoin | USD | `flow` |
+| `stablecoin_redemption_volume_usd` | Stablecoin | USD | `flow` |
+| `yield_earned_usd` | Value delivered | USD | `flow` |
+
+The type, returned as `semantics`, says how a day's value is counted:
+
+| `semantics` | Meaning | Can you add days together? |
+|-------------|---------|----------------------------|
+| `flow` | Activity during that UTC day | Yes. Summing daily values gives the total for a period |
+| `stock` | The value at the end of that UTC day | No. Use the last day's value |
+| `interval_unique` | Distinct users during that UTC day | No. The same user active on two days would be counted twice |
+
+| Field | Description |
+|-------|-------------|
+| `status` | `available` (data is flowing), `no_observations` (connected, no data yet), or `no_source` (the project does not publish a Growth Feed) |
+| `expectedObservationDate` | The most recent day whose data is due. Each day's data is due by 06:00 UTC the following day |
+| `latestObservationDate` | The most recent day with data across all metrics |
+| `metrics[].latest` | The most recent value, regardless of the `from` and `to` range |
+| `metrics[].freshness` | `current` if the latest day arrived by the 06:00 UTC deadline, `stale` if it is late, `no_observations` if there is no data |
+| `metrics[].observations` | Daily values, oldest first. Values are exact decimal strings |
+| `observations[].methodologyVersion` | Version of the project's calculation method. Compare values across dates only when the version matches |
+
+<Note>
+  A value of `0` means the true value was zero. Days with no data are left out of `observations` rather than reported as zero, and gaps are not filled in.
+</Note>
+
+<Note>
+  Only projects that publish a Growth Feed return data. Currently that is Laso and P2P (`laso-finance`, `p2p-protocol`). Every other project returns `status: "no_source"` and an empty `metrics` array.
+</Note>
+
+---
+
 ## GET /v1/dao/overview
 
 Returns onchain DAO configuration and governance parameters.
@@ -236,6 +387,68 @@ curl -H "x-api-key: YOUR_KEY" \
 | `allocation` | Category name (e.g. `Public Sale/ICO`, `Team & Investors`, `Liquidity`) |
 | `amount` | Raw token amount for this category |
 | `percentage` | Share of total supply as a percentage |
+
+---
+
+## GET /v1/project-overview/token-holders
+
+Returns the token's holders ranked by balance. Powers the **Holders** table on a project's Overview tab.
+
+**Parameters:** `baseMint` (required), `limit`, `page`
+
+<Warning>
+  This endpoint takes the token's mint address as `baseMint`, not a `slug`. Get a project's mint from the `baseMint` field of `/v1/project-overview` or `/v1/project-overview/market-metrics`.
+</Warning>
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/token-holders?baseMint=SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 3066, "itemsPerPage": 3, "totalPages": 1022, "currentPage": 1 },
+  "data": [
+    {
+      "owner": "Bo24B7DDVtpa9VxZ4LN8FrAT7TM3cgkri41a5GjFg5Dk",
+      "balance": "12900000",
+      "percentageOfTotalSupply": "50.00010655",
+      "rank": 1,
+      "percentageOfWallet": "99.9999958845433763441684"
+    },
+    {
+      "owner": "98SPcyUZ2rqM2dgjCqqSXS4gJrNTLSNUAAVCF38xYj9u",
+      "balance": "2375659.487229",
+      "percentageOfTotalSupply": "9.20800213",
+      "rank": 2,
+      "percentageOfWallet": "99.99931895993716501152662"
+    },
+    {
+      "owner": "DzYtzoNvPbyFCzwZA6cSm9eDEEmxEB9f8AGkJXUXgnSA",
+      "balance": "1666531.500819",
+      "percentageOfTotalSupply": "6.45943819",
+      "rank": 3,
+      "percentageOfWallet": "50.1213993168474525071791"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `owner` | Holder's wallet address |
+| `balance` | Tokens held, already adjusted for decimals |
+| `percentageOfTotalSupply` | Share of total supply held by this wallet |
+| `rank` | Position by balance, where 1 is the largest holder |
+| `percentageOfWallet` | Share of this wallet's total value held in this token |
+
+Balances are refreshed every 30 minutes. `meta.totalItems` gives the total number of holders.
+
+<Note>
+  The largest holders are often the project's own accounts, such as treasury wallets, the team vesting program, and liquidity pools. Cross-reference `owner` against `/v1/account?slug=` to separate them from outside holders.
+</Note>
 
 ---
 

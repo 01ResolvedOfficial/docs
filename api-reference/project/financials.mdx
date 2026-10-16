@@ -117,6 +117,216 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ---
 
+## GET /v1/dao/treasury/nav-as-breakdown
+
+Returns everything behind a project's NAV per adjusted share (NAV/AS) from a single snapshot: the wallets that make up NAV, the assets left out of it, and the supply adjustments that turn total supply into adjusted supply. Powers the **NAV Breakdown** panel on the Financials tab.
+
+**Parameters:** `slug` (required), `timestamp`
+
+Pass `timestamp` (ISO 8601) to get the latest snapshot at or before that time. Omit it for the current snapshot.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/nav-as-breakdown?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "snapshotAt": "2026-10-16T05:00:17.407Z",
+    "netAssetValueUsd": "5396726.63921106",
+    "navPerAdjustedShareUsd": "0.638262459152071838",
+    "treasuryWallets": [
+      {
+        "key": "treasury:DxqSGtB8UVB6yt2TX3CvxtKWKMTqxz3hvo9RLGaT8AXp",
+        "label": "Raydium (SOLO-USDv)",
+        "valueUsd": "296939.03086937",
+        "componentCount": 1,
+        "isLpAccount": true,
+        "addresses": [
+          {
+            "address": "DxqSGtB8UVB6yt2TX3CvxtKWKMTqxz3hvo9RLGaT8AXp",
+            "tokens": [
+              {
+                "symbol": "USDv",
+                "totalPoolAmount": "297003.970729000000000000",
+                "daoOwnedAmount": "297002.544530459780960971",
+                "price": "0.999786151121399100",
+                "daoOwnedValue": "296939.03086937"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "excludedFromNav": [
+      {
+        "key": "excluded:asset:raydium_pool:DxqSGtB8UVB6yt2TX3CvxtKWKMTqxz3hvo9RLGaT8AXp:SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta:lp_principal:account",
+        "label": "Raydium (SOLO-USDv)",
+        "valueUsd": "298211.70613124",
+        "isLpAccount": true
+      }
+    ],
+    "totalSupply": {
+      "label": "Total Supply",
+      "tokenSymbol": "SOLO",
+      "amount": "25799945.019872000000000000"
+    },
+    "supplyAdjustments": [
+      {
+        "label": "FutarchyAMM",
+        "address": "DzYtzoNvPbyFCzwZA6cSm9eDEEmxEB9f8AGkJXUXgnSA",
+        "tokenSymbol": "SOLO",
+        "amount": "1666527.217466"
+      }
+    ],
+    "adjustedSupply": "8455340.842669298999280154"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `snapshotAt` | Time of the snapshot all figures come from |
+| `netAssetValueUsd` | NAV in USD: the combined value of `treasuryWallets` |
+| `navPerAdjustedShareUsd` | NAV/AS. Formula: `netAssetValueUsd ÷ adjustedSupply` |
+| `treasuryWallets` | Wallets counted in NAV, each with its USD value and token holdings. For LP accounts (`isLpAccount: true`) only the non-native side is counted, shown as `daoOwnedAmount` and `daoOwnedValue` |
+| `excludedFromNav` | Assets held but left out of NAV, mainly the project's own token sitting in LP pools and treasury wallets |
+| `totalSupply.amount` | Total token supply |
+| `supplyAdjustments` | Protocol-controlled and unvested balances subtracted from total supply |
+| `adjustedSupply` | Supply used for NAV/AS. Formula: `totalSupply.amount − sum of supplyAdjustments` |
+
+<Note>
+  The project's own token never counts toward NAV, even when the treasury holds it. It appears in `excludedFromNav` instead, and the matching token balances are subtracted from supply in `supplyAdjustments`.
+</Note>
+
+---
+
+## GET /v1/dao/treasury/nav-as-chart
+
+Returns NAV/AS over time alongside token price, adjusted supply, and premium or discount.
+
+**Parameters:** `slug` (required), `range`
+
+`range` accepts `1D`, `1W`, `1M`, `3M`, or `ALL`. The range sets the spacing between points: `1W` returns hourly points, `3M` returns 12-hourly points.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/nav-as-chart?slug=solomon&range=1W"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "range": "1W",
+    "resolution": "hour",
+    "launchStatus": "active",
+    "today": "2026-10-16T05:00:00.000Z",
+    "historical": [
+      {
+        "timestamp": "2026-10-09T06:00:00.000Z",
+        "navAs": "0.642785012679927958",
+        "tokenPrice": "0.925763049614366000",
+        "adjustedSupply": "8660792.700708000000000000",
+        "discountPremium": "44.023745319548348450"
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `resolution` | Spacing between points, set by `range` (e.g. `hour`, `12hour`) |
+| `historical[].navAs` | NAV per adjusted share at this point |
+| `historical[].tokenPrice` | Spot token price at this point |
+| `historical[].adjustedSupply` | Adjusted supply used for NAV/AS at this point |
+| `historical[].discountPremium` | Premium or discount to NAV/AS in %. Formula: `(tokenPrice − navAs) ÷ navAs × 100`. Positive = premium, negative = discount |
+
+---
+
+## GET /v1/dao/treasury/premium-discount-breakdown
+
+Returns the current premium or discount to NAV/AS, with the low, mean, and high values and when the low and high occurred. Powers the **Prem/Disc** card.
+
+**Parameters:** `slug` (required), `timestamp`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/premium-discount-breakdown?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "snapshotAt": "2026-10-16T05:00:17.407Z",
+    "spotPrice": "0.741050591747177600",
+    "navPerAdjustedShare": "0.638262459152071838",
+    "low": "-38.920023923255671799",
+    "lowAt": "2026-02-05T21:00:00.000Z",
+    "mean": "-3.742005579529598862",
+    "high": "79.983076294771995207",
+    "highAt": "2026-09-23T17:00:43.395Z"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `spotPrice` | Token price at the snapshot |
+| `navPerAdjustedShare` | NAV/AS at the snapshot |
+| `low` / `lowAt` | Deepest discount (or smallest premium) in %, and when it occurred |
+| `mean` | Average premium or discount in % |
+| `high` / `highAt` | Largest premium in %, and when it occurred |
+
+All percentages use the same convention: positive = trading above NAV/AS (premium), negative = below (discount). The current value is `(spotPrice − navPerAdjustedShare) ÷ navPerAdjustedShare × 100`.
+
+---
+
+## GET /v1/dao/treasury/runway-breakdown
+
+Returns runway in months, calculated both with and without LP value, along with the inputs.
+
+**Parameters:** `slug` (required), `timestamp`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/runway-breakdown?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "snapshotAt": "2026-10-16T05:00:17.407Z",
+    "monthlySpendLimitUsd": "100000.00000000",
+    "nonNativeTreasuryValueUsd": "2379218.98864854",
+    "nonNativeLpValueUsd": "3017507.65056252",
+    "runwayExcludingLpMonths": "23.792189886485403043",
+    "runwayIncludingLpMonths": "53.967266392110581241"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `monthlySpendLimitUsd` | The DAO's monthly spend limit in USD |
+| `nonNativeTreasuryValueUsd` | Treasury value excluding the project's own token and LP positions |
+| `nonNativeLpValueUsd` | Non-native side of the treasury's LP positions |
+| `runwayExcludingLpMonths` | Formula: `nonNativeTreasuryValueUsd ÷ monthlySpendLimitUsd` |
+| `runwayIncludingLpMonths` | Formula: `(nonNativeTreasuryValueUsd + nonNativeLpValueUsd) ÷ monthlySpendLimitUsd` |
+
+The two treasury inputs add up to NAV: `nonNativeTreasuryValueUsd + nonNativeLpValueUsd = netAssetValueUsd` in `/v1/dao/treasury/nav-as-breakdown`.
+
+---
+
 ## GET /v1/dao/asset-allocation-breakdown
 
 Returns treasury value summarized by wallet category.
