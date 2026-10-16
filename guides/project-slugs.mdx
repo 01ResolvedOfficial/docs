@@ -1,52 +1,81 @@
 ---
 title: "Project Slugs"
-description: "All tracked projects and their slug values for use in API calls."
+description: "Every tracked project and the slug to use for it in API calls."
 icon: "list"
 ---
 
-Use these `slug` values in the `?slug=` query parameter or `{daoSlug}` path parameter.
+Use these values in the `slug` query parameter, or the `{slug}` path parameter.
+
+<Note>
+  This page updates automatically from the API, so new listings appear here without a docs release.
+</Note>
 
 ---
 
-## Ownership Coins (Active ICOs)
+## Ownership Coins
+
+Projects that launched an ownership coin through MetaDAO, Futardio, or Backable. Full coverage: overview, financials, and decision markets.
 
 | Project | Slug | Token |
 |---------|------|-------|
-| MetaDAO | `metadao` | META |
+| ACCRUE | `accrue` | ACCRUE |
+| Areal Finance | `areal-finance` | ARL |
 | Avici | `avici` | AVICI |
-| Solomon | `solomon` | SOLO |
-| P2P Protocol | `p2p-protocol` | P2P |
-| Umbra | `umbra` | UMBRA |
-| Omnipair | `omnipair` | OMFG |
-| Loyal | `loyal` | LOYAL |
-| Jurassic Finance | `jurassic-finance` | RAWR |
-| Paystream | `paystream` | PAYS |
-| ZKLSOL | `zklsol` | ZKFG |
-| Superclaw | `superclaw` | SUPER |
+| Basket | `basket` | BASKET |
+| Credible Finance | `credible` | CRED |
 | Futardio cult | `futardio-cult` | FUTARDIO |
+| GeSIM | `gesim` | GSIM |
+| HiveBits | `hivebits` | NECTAR |
+| Jurassic Finance | `jurassic-finance` | RAWR |
+| Kimia | `kimia` | KIMIA |
+| Laso Finance | `laso-finance` | LASO |
+| LFOWN | `lfown` | LFOWN |
+| Loyal | `loyal` | LOYAL |
+| MetaDAO | `metadao` | META |
+| MimiKrew | `mimikrew` | KREW |
+| Omnipair | `omnipair` | OMFG |
+| ordr.trade | `ordr.trade` | ORDR |
+| P2P Protocol | `p2p-protocol` | P2P |
+| PREDICT | `predict` | PREDICT |
+| Rip Cars | `rip-cars` | CARS |
+| Solomon | `solomon` | SOLO |
+| Superclaw | `superclaw` | SUPER |
+| The Syndicate | `the-syndicate` | GANG |
+| Umbra | `umbra` | UMBRA |
 
 ---
 
-## Additional Tracked Projects
+## Other Tracked DAOs
 
-These projects use futarchy governance and are tracked for decision market activity but do not have active ownership coin ICOs.
+Projects that use decision markets but did not launch an ownership coin. Covered for decision markets only.
 
 | Project | Slug |
 |---------|------|
-| Ranger | `ranger` |
-| Kyros | `kyros` |
-| Coal | `coal` |
-| Sanctum | `sanctum` |
-| MTN Capital | `mtncapital` |
-| Island DAO | `island-dao` |
+| coal | `coal` |
+| Drift | `drift` |
 | Flash Trade | `flash-trade` |
+| FutureDAO | `futuredao` |
+| IslandDAO | `island-dao` |
+| Jito DAO | `jito-dao` |
+| Kollan House | `kollan-house` |
+| Kyros | `kyros` |
 | Marinade | `marinade` |
 | ORE | `ore` |
+| Sanctum | `sanctum` |
 | Save DAO | `save-dao` |
-| Drift | `drift` |
-| Jito DAO | `jito-dao` |
-| FutureDAO | `futuredao` |
-| Kollan House | `kollan-house` |
+
+---
+
+## Wound Down
+
+Projects whose ownership coin has been liquidated or wound down. Historical data remains available. See `/v1/global-dashboard/graveyard-launches` for details.
+
+| Project | Slug | Token | Outcome | Ended |
+|---------|------|-------|---------|-------|
+| Paystream | `paystream` | PAYS | Liquidated | 2026-09-08 |
+| ZKLSOL | `zklsol` | ZKFG | Liquidated | 2026-06-20 |
+| Ranger | `ranger` | RNGR | Liquidated | 2026-03-05 |
+| mtnCapital | `mtncapital` | MTN | Liquidated | 2025-09-05 |
 
 ---
 

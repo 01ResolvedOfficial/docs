@@ -1,0 +1,42 @@
+name: Update project slugs
+
+# Rebuilds guides/project-slugs.mdx from the live API so new listings
+# appear in the docs without a manual release. Commits only on change.
+on:
+  schedule:
+    - cron: "15 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-project-slugs
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Regenerate the page
+        env:
+          API_KEY: ${{ secrets.RESOLVED_API_KEY_LAUNCHES }}
+        run: python scripts/update_project_slugs.py
+
+      - name: Commit if the list changed
+        run: |
+          if git diff --quiet -- guides/project-slugs.mdx; then
+            echo "No change to the project list."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add guides/project-slugs.mdx
+          git commit -m "Update project slugs from the API"
+          git push
