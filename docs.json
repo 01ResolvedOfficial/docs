@@ -28,7 +28,8 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "width": 600
+    "width": 600,
+    "href": "https://www.01resolved.com"
   },
   "navigation": {
     "tabs": [
@@ -110,7 +111,7 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Platform",
+          "anchor": "01Resolved",
           "href": "https://www.01resolved.com",
           "icon": "chart-line"
         },
@@ -124,6 +125,7 @@
   },
   "footer": {
     "socials": {
+      "website": "https://www.01resolved.com",
       "x": "https://x.com/01Resolved",
       "telegram": "https://t.me/Official01Resolved"
     }
