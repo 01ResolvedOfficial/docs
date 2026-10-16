@@ -1,0 +1,167 @@
+---
+title: "NAV/AS Premium & Discount"
+description: "Build valuation screens and signals from NAV per adjusted share, premium/discount, runway, and liquidity."
+icon: "scale-unbalanced"
+---
+
+Every ownership coin is backed by a treasury. 01Resolved measures that backing per token as **NAV/AS** and compares it with the market price as a **premium or discount**. This guide shows how to turn those numbers into screens you can run, and what to check before trusting a signal.
+
+<Warning>
+  This guide explains how to work with the data. It is not investment advice. NAV figures are analytical estimates derived from onchain activity, not audited accounts.
+</Warning>
+
+---
+
+## The numbers
+
+| Metric | Meaning | Where to get it |
+|--------|---------|-----------------|
+| **NAV** | Non-native treasury value in USD: stablecoins, the non-native side of LP positions, and other non-native holdings. The project's own token never counts | `netAssetValueUsd` in `/v1/global-dashboard/projects-launch`, `nav` in `/v1/dao/treasury/overview` |
+| **NAV/AS** | NAV ÷ adjusted supply. Adjusted supply removes protocol-controlled and unvested tokens, so NAV/AS is the backing per token that has a live claim | `netAssetValue` in `projects-launch`, `/v1/dao/treasury/nav-as-breakdown` |
+| **Premium / discount** | How far the price sits above (premium) or below (discount) NAV/AS. Formula: `(price − NAV/AS) ÷ NAV/AS` | `premDisc` in `projects-launch`, `/v1/dao/treasury/premium-discount-breakdown` |
+| **mNAV** | Fully diluted valuation ÷ NAV. How many times its treasury the market values the project at | `mNAV` in `projects-launch` |
+| **Runway** | Months the treasury lasts at the monthly spend limit, with and without LP value | `/v1/dao/treasury/runway-breakdown` |
+
+<Note>
+  Units differ between endpoints. `premDisc` in `projects-launch` is a **ratio** (`0.16` = 16% premium). `spotPremiumDiscountToNav` in `treasury/overview`, `discount.pct` in `market-metrics`, and every value in `premium-discount-breakdown` are **percentages** (`16.1` = 16.1%).
+</Note>
+
+---
+
+## How to read a premium or discount
+
+- **A discount is a floor signal.** When a token trades below NAV/AS for a sustained period, holders can be better off returning the treasury than running the project, which makes a liquidation proposal rational. That pull toward NAV/AS only works if holders coordinate and trust the NAV figure. See [Wound Down](/guides/project-slugs) for projects that went this way.
+- **A premium is the market paying for what the balance sheet does not show:** product, growth, and expectations. The larger the premium, the more of the price depends on those expectations holding up.
+- **The premium prices the operating business.** `premDisc × NAV` gives the value the market assigns beyond the treasury. A 50% premium on a $4M NAV implies the market values the business at about $2M.
+- **Read NAV, NAV/AS, and price together.** NAV falling means the treasury is being spent. NAV/AS falling while NAV holds means supply is growing. Price moving on its own means expectations changed. `/v1/dao/treasury/nav-as-chart` returns all three over time.
+
+---
+
+## Strategy 1: Screen every coin by premium or discount
+
+One call returns NAV/AS and premium/discount for every ownership coin. Rank them, then dig into the ones that stand out.
+
+```python
+import os
+import time
+
+import requests
+
+BASE = "https://api.01resolved.com/v1"
+HEADERS = {"x-api-key": os.environ["API_KEY"]}
+
+
+def get(path, **params):
+    while True:
+        r = requests.get(f"{BASE}{path}", headers=HEADERS, params=params, timeout=60)
+        if r.status_code == 429:  # rate limited: wait as instructed, then retry
+            time.sleep(r.json()["meta"].get("retry_after", 10) + 1)
+            continue
+        r.raise_for_status()
+        return r.json()
+
+
+# 1. Every ownership coin, with NAV/AS and premium/discount, in one call
+coins = get("/global-dashboard/projects-launch", limit=50)["data"]
+
+rows = []
+for c in coins:
+    rows.append({
+        "slug": c["organizationSlug"],
+        "symbol": c["tokenSymbol"],
+        "prem_disc_pct": float(c["premDisc"]) * 100,  # premDisc is a ratio
+        "nav_usd": float(c["netAssetValueUsd"]),
+        "runway_months": float(c["monthsOfRunway"]),
+    })
+
+# 2. Rank from deepest discount to largest premium
+rows.sort(key=lambda r: r["prem_disc_pct"])
+print(f"{'coin':8} {'prem/disc':>10} {'NAV':>12} {'runway':>8}")
+for r in rows[:5]:
+    print(f"{r['symbol']:8} {r['prem_disc_pct']:>+9.1f}% {r['nav_usd']:>12,.0f} {r['runway_months']:>7.1f}m")
+```
+
+Output on October 16, 2026:
+
+```
+coin      prem/disc          NAV   runway
+RAWR         -65.2%      837,807    91.4m
+NECTAR       -38.0%      123,248    10.2m
+ORDR         -29.7%       96,003     5.0m
+P2P          -15.6%    4,124,902    18.0m
+LOYAL        -12.3%      144,625     0.1m
+```
+
+A discount on its own says little. LOYAL's runway column shows why: almost all of its NAV sits in LP positions, with about $9K of free treasury against a $60K monthly spend limit. `runway-breakdown` gives 0.15 months excluding LP and 2.4 months including it. `monthsOfRunway` is measured against the spend limit, not actual spending, so check its inputs before reading anything into it. Strategies 2 and 4 cover the checks that separate a real gap from a misleading one.
+
+---
+
+## Strategy 2: Compare a coin with its own history
+
+Some coins have traded at a discount since launch, while others swing between large premiums and discounts. `premium-discount-breakdown` returns each coin's low, mean, and high, so you can see whether today's value is unusual for that coin. Add this to the script above:
+
+```python
+# 3. For each coin at a discount: where does today sit in its own history,
+#    and is there enough liquidity for the price to mean anything?
+for r in [r for r in rows if r["prem_disc_pct"] < 0][:3]:
+    time.sleep(2.1)  # stay under the per-minute limit
+    pd = get("/dao/treasury/premium-discount-breakdown", slug=r["slug"])["data"]
+    time.sleep(2.1)
+    mm = get("/project-overview/market-metrics", slug=r["slug"])["data"]
+    low, high = float(pd["low"]), float(pd["high"])
+    position = (r["prem_disc_pct"] - low) / (high - low) * 100
+    print(f"{r['symbol']}: {r['prem_disc_pct']:+.1f}% today, "
+          f"range {low:+.1f}% to {high:+.1f}% (mean {float(pd['mean']):+.1f}%), "
+          f"{position:.0f}% of the way up its range; "
+          f"liquidity ${float(mm['liquidity']['usd']):,.0f}, "
+          f"24h volume ${float(mm['volume24h']['usd']):,.0f}")
+```
+
+Output on October 16, 2026:
+
+```
+RAWR: -65.2% today, range -68.4% to +572.8% (mean +109.2%), 0% of the way up its range; liquidity $178,623, 24h volume $7,826
+NECTAR: -38.0% today, range -68.6% to +206.7% (mean -38.1%), 11% of the way up its range; liquidity $51,224, 24h volume $1,521
+ORDR: -29.7% today, range -65.3% to -7.9% (mean -32.5%), 62% of the way up its range; liquidity $48,713, 24h volume $23
+```
+
+The three discounts read very differently:
+
+- **RAWR** is at the bottom of its own range, far below its average. That is the coin furthest from its usual valuation.
+- **NECTAR** is almost exactly at its average. A 38% discount is normal for it.
+- **ORDR** is near its average too, and only $23 traded in the last day. A price set by trades that small says little about value.
+
+---
+
+## Strategy 3: Track whether a gap is opening or closing
+
+Pull `/v1/dao/treasury/nav-as-chart` with `range=1M` or `range=3M`. Each point has `navAs`, `tokenPrice`, `adjustedSupply`, and `discountPremium`, so you can see which side is moving:
+
+- **Price falling while NAV/AS holds:** the market is marking the project down. The discount widens without any change to the treasury.
+- **NAV/AS falling while price holds:** the treasury is being spent or supply is unlocking. A discount can disappear without the price moving.
+- **`adjustedSupply` stepping up:** vested tokens unlocked. NAV/AS drops by the same proportion even though the treasury did not change.
+
+---
+
+## Strategy 4: Check what sits behind the NAV
+
+Before treating a discount as an opportunity, confirm the NAV is what it appears to be:
+
+| Check | Endpoint | What to look for |
+|-------|----------|------------------|
+| **Runway** | `/v1/dao/treasury/runway-breakdown` | A discount on a treasury that runs out in a few months may simply reflect spending ahead |
+| **Liquidity** | `/v1/project-overview/market-metrics` | Thin pools and low volume let small trades move the premium a long way |
+| **What NAV counts** | `/v1/dao/treasury/nav-as-breakdown` | Which wallets and assets are included, and what is excluded |
+| **Accounts outside NAV** | `/v1/account?slug=` | Operating accounts or inventory held outside the tracked treasury can make NAV understate real backing |
+| **Live decisions** | `/v1/global-dashboard/projects/decision-markets` | A proposal to spend, buy back, or liquidate can move NAV/AS sharply when it passes |
+| **Operating activity** | `/v1/growth-feed` | For projects that publish one, whether the business behind a premium is growing |
+
+---
+
+## Strategy 5: Watch for liquidation and buyback proposals
+
+The floor described above becomes real through decision markets. Poll `/v1/global-dashboard/projects/decision-markets` for live and initiated proposals, open any that propose a liquidation or buyback with `/v1/proposal/{publicKey}`, and follow the market with `/v1/proposal/{publicKey}/pass-edge`. Completed liquidations, with their outcome and date, are in `/v1/global-dashboard/graveyard-launches`.
+
+<Tip>
+  Rate limits apply per key. Fetch the market-wide list once from `projects-launch`, then call per-project endpoints only for the coins your screen selects, as in Strategy 2.
+</Tip>
