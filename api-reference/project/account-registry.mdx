@@ -314,7 +314,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ## GET /v1/account/\{id\}
 
-Returns full detail for a single account, including notes, group assignment, and an audit trail of edits.
+Returns full detail for a single account, including notes and group assignment.
 
 **Parameters:** `id` (path, required)
 
@@ -342,16 +342,14 @@ curl -H "x-api-key: YOUR_KEY" \
       "entityType": "DAO",
       "trackingMode": "full",
       "subGroups": [
-        { "subGroup": "Vesting", "group": "Treasury", "subGroupId": 7, "groupId": 1 }
+        {
+          "subGroup": "Vesting",
+          "group": "Treasury",
+          "subGroupId": 7,
+          "groupId": 1
+        }
       ]
-    },
-    "logs": [
-      {
-        "action": "update",
-        "createdAt": "2026-05-28T10:10:21.812Z",
-        "changedBy": "Super Admin"
-      }
-    ]
+    }
   }
 }
 ```
@@ -363,7 +361,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `account.contractLink` | Link to the controlling contract, for `Program` custody accounts |
 | `account.replacedBy` | Account that superseded this one, if retired |
 | `account.subGroups` | Group and sub-group assignment from `/v1/group` |
-| `logs` | Audit trail of edits, with `action`, `createdAt`, and `changedBy` |
 ---
 
 ## GET /v1/account/\{id\}/balance/onchain
@@ -503,7 +500,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ## GET /v1/counterparty/\{id\}
 
-Returns full detail for a single counterparty, including its address list and an audit trail of edits.
+Returns full detail for a single counterparty, including its address list.
 
 **Parameters:** `id` (path, required)
 
@@ -528,8 +525,7 @@ curl -H "x-api-key: YOUR_KEY" \
         "address": "JD38n7ynKYcgPpF7k1BhXEeREu1KqptU93fVGy3S624k",
         "network": "Solana"
       }
-    ],
-    "logs": []
+    ]
   }
 }
 ```
@@ -540,4 +536,3 @@ curl -H "x-api-key: YOUR_KEY" \
 | `address` | Primary address for this counterparty |
 | `network` | Chain the primary address sits on |
 | `addresses` | All known addresses, each with its `network` |
-| `logs` | Audit trail of edits made to this counterparty record |

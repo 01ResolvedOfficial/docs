@@ -1,0 +1,125 @@
+---
+title: "Revenue & Expenses"
+description: "Classified revenue and expenses for a project, itemized and in total."
+icon: "receipt"
+---
+
+These endpoints match the **Revenues** and **Expenses** sections of a project's Financials tab. All endpoints accept a `slug` query parameter to identify the project. See [Project Slugs](/guides/project-slugs) for valid values.
+
+---
+
+## GET /v1/dao/revenues
+
+Returns monthly revenue broken down by source.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/revenues?slug=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "period": "2025-12-01",
+      "interval": "month",
+      "details": [
+        { "source": "Protocol fees", "revenue": "2720034.93" }
+      ],
+      "revenue": "2720034.93"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `period` | Start of this month |
+| `revenue` | Total USD revenue for this period |
+| `details[].source` | Revenue source label (e.g. `Protocol fees`) |
+| `details[].revenue` | USD revenue from this source |
+---
+
+## GET /v1/dao/total-revenue
+
+Returns cumulative total revenue in USD.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/total-revenue?slug=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalRevenue": "3818247"
+  }
+}
+```
+</Accordion>
+---
+
+## GET /v1/dao/expenses
+
+Returns monthly expenses broken down by category.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/expenses?slug=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    {
+      "period": "2026-02-01",
+      "interval": "month",
+      "details": [
+        { "source": "Service provider", "expense": "240000" },
+        { "source": "Audit / Security", "expense": "0" }
+      ],
+      "expense": "240000"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `period` | Start of this month |
+| `expense` | Total USD expenses for this period |
+| `details[].source` | Expense category label |
+| `details[].expense` | USD amount for this category |
+---
+
+## GET /v1/dao/total-expense
+
+Returns cumulative total expenses in USD.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/total-expense?slug=metadao"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalExpense": "960000"
+  }
+}
+```
+</Accordion>

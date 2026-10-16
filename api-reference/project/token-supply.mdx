@@ -1,0 +1,116 @@
+---
+title: "Token Supply"
+description: "Minted, burned, and net supply for a project's token, with every mint and burn event."
+icon: "coins"
+---
+
+These endpoints match the **Token Supply** section of a project's Financials tab. All endpoints accept a `slug` query parameter to identify the project. See [Project Slugs](/guides/project-slugs) for valid values.
+
+---
+
+## GET /v1/dao/token-supply/overview
+
+Returns aggregate token supply statistics — total minted, burned, and net supply.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply/overview?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalMint": "25800002",
+    "totalBurn": "29.41",
+    "resultingSupply": "25799972.59",
+    "netChange": "1.75",
+    "symbol": "SOLO",
+    "publicKey": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalMint` | Cumulative tokens minted |
+| `totalBurn` | Cumulative tokens burned |
+| `resultingSupply` | Current net supply. Formula: `totalMint - totalBurn` |
+| `netChange` | Net supply change over the tracked period |
+---
+
+## GET /v1/dao/token-supply
+
+Returns the full mint and burn event ledger, linked to governance proposals where applicable.
+
+**Parameters:** `slug` (required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply?slug=solomon&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 6 },
+  "data": [
+    {
+      "id": 19589,
+      "timestamp": "2026-05-21T07:51:06.027Z",
+      "type": "Mint",
+      "amount": "1",
+      "resultingSupply": "25799972.83",
+      "change": "0.000004",
+      "priceAtTime": "1",
+      "usdValue": "1",
+      "signature": null,
+      "proposal": null
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `type` | `Mint` or `Burn` |
+| `amount` | Token amount of this event |
+| `resultingSupply` | Total supply after this event |
+| `change` | Percentage change to supply from this event |
+| `priceAtTime` | Token price (USD) at the time of the event |
+| `usdValue` | USD value of the mint or burn |
+| `signature` | Solana transaction hash (null if not recorded) |
+| `proposal` | Linked governance proposal, if applicable |
+---
+
+## GET /v1/dao/token-supply/chart
+
+Returns daily circulating supply history.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply/chart?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    { "period": "2026-05-28T00:00:00.000Z", "supply": 25799972.67, "interval": "day" },
+    { "period": "2026-05-29T00:00:00.000Z", "supply": 25799972.67, "interval": "day" }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `period` | Start of this time interval |
+| `supply` | Circulating supply on this date |
+| `interval` | Granularity of the data point (e.g. `day`) |

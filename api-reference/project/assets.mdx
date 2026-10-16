@@ -1,0 +1,124 @@
+---
+title: "Assets"
+description: "How a project's treasury is allocated across assets, and where its own token is held."
+icon: "chart-pie"
+---
+
+These endpoints match the **Asset Breakdown** and **Native Token Overview** sections of a project's Financials tab. All endpoints accept a `slug` query parameter to identify the project. See [Project Slugs](/guides/project-slugs) for valid values.
+
+---
+
+## GET /v1/dao/asset-allocation-breakdown
+
+Returns treasury value summarized by wallet category.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/asset-allocation-breakdown?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalValue": "5926585.35",
+    "categories": [
+      { "name": "Main", "value": "4548010.51" },
+      { "name": "LP Positions", "value": "1378574.85" }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalValue` | Total USD value across all categories |
+| `categories[].name` | Category label (e.g. `Main`, `LP Positions`) |
+| `categories[].value` | USD value held in this category |
+---
+
+## GET /v1/dao/list-asset-allocation-breakdown
+
+Returns the full treasury breakdown by category with per-wallet and per-token detail.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/list-asset-allocation-breakdown?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalValue": "5926585.35",
+    "categories": [
+      {
+        "name": "Main",
+        "value": "4548010.51",
+        "accountCount": 2,
+        "accounts": [
+          { "name": "Vault", "address": "8GVq1sr...", "value": "4498024.85" },
+          { "name": "DAO Main", "address": "98SPcy...", "value": "49985.66" }
+        ],
+        "tokens": [
+          { "symbol": "USDC", "amount": "4550000.03", "value": "4548002.87" },
+          { "symbol": "SOL", "amount": "0.111", "value": "7.64" }
+        ]
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `categories[].accounts` | Individual wallets within this category with their USD values |
+| `categories[].tokens` | Token holdings across all wallets in this category |
+---
+
+## GET /v1/dao/native-token-accounts
+
+Returns where the DAO's own governance token is held across its treasury wallets.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/native-token-accounts?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "token": {
+      "symbol": "SOLO",
+      "baseMint": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta"
+    },
+    "totalAmount": "17596386.60",
+    "totalValue": "10406803.80",
+    "accountCount": 4,
+    "accounts": [
+      { "name": "Team Performance Package", "address": "Bo24B7...", "amount": "12900000", "value": "7629280.49" },
+      { "name": "FutarchyAMM", "address": "DzYtzo...", "amount": "2320709.64", "value": "1372507.35" },
+      { "name": "DAO Main", "address": "98SPcy...", "amount": "1475659.49", "value": "872730.24" },
+      { "name": "Meteora AMM", "address": "2zsbEC...", "amount": "900017.47", "value": "532285.71" }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalAmount` | Total governance tokens held across all DAO wallets |
+| `totalValue` | USD value of all DAO-held governance tokens |
+| `accounts[].name` | Labeled wallet name |
+| `accounts[].amount` | Raw token amount in this wallet |
+| `accounts[].value` | USD value in this wallet |

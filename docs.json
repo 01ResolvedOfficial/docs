@@ -78,6 +78,9 @@
                 "icon": "dollar-sign",
                 "pages": [
                   "api-reference/project/financials",
+                  "api-reference/project/assets",
+                  "api-reference/project/token-supply",
+                  "api-reference/project/revenue-expenses",
                   "api-reference/project/account-registry",
                   "api-reference/project/movements"
                 ]

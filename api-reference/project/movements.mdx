@@ -22,7 +22,9 @@ curl -H "x-api-key: YOUR_KEY" \
 <Accordion title="Example Response">
 ```json
 {
-  "meta": { "totalItems": 56222 },
+  "meta": {
+    "totalItems": 56222
+  },
   "data": [
     {
       "id": 19958999,
@@ -42,8 +44,7 @@ curl -H "x-api-key: YOUR_KEY" \
       "subCategoryName": null,
       "entity": "DAO",
       "proposalId": null,
-      "proposalTitle": null,
-      "canConfirmed": false
+      "proposalTitle": null
     }
   ]
 }
@@ -57,7 +58,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `classifiedStatus` | Classification state: `Unclassified`, `Classified`, or `Needs Review` |
 | `categoryName` / `subCategoryName` | Classification labels once a movement has been reviewed |
 | `entity` | Entity type associated with this movement (e.g. `DAO`) |
-| `canConfirmed` | Whether this movement is eligible for manual confirmation |
 ---
 
 ## GET /v1/movement/export/csv
@@ -118,8 +118,7 @@ curl -H "x-api-key: YOUR_KEY" \
       "symbol": "USDC",
       "tokenPublicKey": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
       "usdPrice": "0.9996"
-    },
-    "classificationHistories": []
+    }
   }
 }
 ```
@@ -129,7 +128,6 @@ curl -H "x-api-key: YOUR_KEY" \
 |-------|-------------|
 | `type` | Onchain instruction type (e.g. `INITIALIZE_ACCOUNT`, `TRANSFER`) |
 | `source` | Onchain program that executed this instruction |
-| `classificationHistories` | Audit trail of all classification changes made to this movement |
 ---
 
 ## GET /v1/movement/filters/entity
