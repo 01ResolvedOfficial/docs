@@ -10,7 +10,7 @@ All endpoints accept a `slug` query parameter to identify the project. See [Proj
 
 ## GET /v1/dao/treasury/overview
 
-Returns a high-level treasury summary. The fastest way to get key financial metrics.
+Returns a project's headline treasury figures in one call: NAV, NAV/AS, premium or discount to NAV/AS, runway range, and the monthly allowance. Powers the **Treasury** cards on the Financials tab and the **Monthly Allowance** card on the Overview tab.
 
 **Parameters:** `slug` (required)
 
@@ -23,11 +23,30 @@ curl -H "x-api-key: YOUR_KEY" \
 ```json
 {
   "data": {
-    "baseMintCurrentPrice": "0.5914",
-    "totalBalance": "5926585.69",
-    "netAssetValue": "0.7224",
-    "spendingLimit": "100000",
-    "monthOfRunway": "45.50"
+    "nav": "5397852.87689693",
+    "navPerAdjustedShare": "0.638322292456433533",
+    "spotPremiumDiscountToNav": "16.180087616962251081",
+    "monthlyAllowance": "100000.00000000",
+    "monthsOfRunway": {
+      "min": "23.794504255556556514",
+      "max": "53.978528768969254418"
+    },
+    "allowance": {
+      "status": "ok",
+      "period": "month",
+      "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "tokenSymbol": "USDC",
+      "amount": "100000",
+      "drawn": "0",
+      "remaining": "100000",
+      "amountUsd": "100000",
+      "drawnUsd": "0",
+      "remainingUsd": "100000",
+      "periodStart": "2026-10-14T19:30:24.000Z",
+      "nextRenewalAt": "2026-11-13T19:30:24.000Z",
+      "observedAt": "2026-10-16T07:15:16.428Z",
+      "matchesIndexedLimit": true
+    }
   }
 }
 ```
@@ -35,17 +54,20 @@ curl -H "x-api-key: YOUR_KEY" \
 
 | Field | Description |
 |-------|-------------|
-| `baseMintCurrentPrice` | Current USD price of the project's governance token |
-| `totalBalance` | Total treasury value in USD across all wallets |
-| `netAssetValue` | NAV per Adjusted Supply (NAV/AS). Formula: `(Treasury Stables + LP Value (non-native side) + Other Non-Native Holdings) ÷ (Total Supply − Protocol-Controlled Tokens − Unvested Allocations)`. If NAV/AS > spot price, the project is trading at a relative discount. If NAV/AS < spot price, it is trading at a relative premium. |
-| `spendingLimit` | Monthly spend limit in USDC |
-| `monthOfRunway` | Months of runway. Formula: `treasury value / (monthly spend limit + other monthly expenses)` |
-
+| `nav` | NAV in USD: the treasury's non-native value. See `/v1/dao/treasury/nav-as-breakdown` for its components |
+| `navPerAdjustedShare` | NAV per Adjusted Supply (NAV/AS). Formula: `(Treasury Stables + LP Value (non-native side) + Other Non-Native Holdings) ÷ (Total Supply − Protocol-Controlled Tokens − Unvested Allocations)`. If NAV/AS > spot price, the project is trading at a relative discount. If NAV/AS < spot price, it is trading at a relative premium. |
+| `spotPremiumDiscountToNav` | Premium or discount of the spot price to NAV/AS in %. Positive = premium, negative = discount |
+| `monthlyAllowance` | The DAO's monthly spending allowance in USD |
+| `monthsOfRunway.min` | Runway excluding LP value. Formula: `non-native treasury ÷ monthlyAllowance` |
+| `monthsOfRunway.max` | Runway including the non-native side of LP positions. See `/v1/dao/treasury/runway-breakdown` for the inputs |
+| `allowance.drawn` / `allowance.remaining` | How much of this period's allowance has been spent and how much is left, in tokens. The `…Usd` fields give the same in USD |
+| `allowance.periodStart` / `allowance.nextRenewalAt` | When the current allowance period started and when it next renews |
+| `allowance.status` | State of the allowance, e.g. `ok` |
 ---
 
 ## GET /v1/dao/treasury
 
-Returns the full treasury breakdown — every tracked wallet and every token held.
+Returns every token the treasury holds, with amounts and prices.
 
 **Parameters:** `slug` (required)
 
@@ -58,19 +80,21 @@ curl -H "x-api-key: YOUR_KEY" \
 ```json
 {
   "data": {
-    "totalAssetsValue": "5926410.11",
+    "totalAssetsValue": "5397465.890798684126736533187295813472386396749735",
     "groupedAssets": [
       {
-        "treasuryAddress": "8GVq1srBAZBsCeYpwdKUwEXzDffwAE5xSLWB1ec2gerr",
-        "tokenAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        "amount": "5929178987601",
+        "tokenAddress": "USDvUSpnhCr9yBgj3UyVrD239HRUv4RsHwH2FxsWuMk",
+        "amount": "3672802607541.71184735307634787333",
         "token": {
-          "symbol": "USDC",
+          "url": "https://coin-images.coingecko.com/coins/images/55255/large/USDv.png?1789197811",
+          "symbol": "USDv",
           "decimals": 6,
-          "usdPrice": "0.9995"
+          "usdPrice": "0.9998939257540795"
         }
       }
-    ]
+    ],
+    "spendingLimit": "100000",
+    "monthOfRunway": "3.00334123094"
   }
 }
 ```
@@ -79,13 +103,13 @@ curl -H "x-api-key: YOUR_KEY" \
 | Field | Description |
 |-------|-------------|
 | `totalAssetsValue` | Total USD value across all tracked wallets |
-| `groupedAssets[].treasuryAddress` | The wallet holding this token |
-| `groupedAssets[].amount` | Raw token amount. Divide by `10^decimals` for human-readable value |
+| `groupedAssets[].tokenAddress` | The token's mint address. Holdings of the same token across wallets are combined |
+| `groupedAssets[].amount` | Raw token amount. Divide by `10^decimals` for the human-readable value |
 | `groupedAssets[].token.symbol` | Token ticker symbol |
 | `groupedAssets[].token.decimals` | Token decimal places |
+| `spendingLimit` | Monthly spend limit in USD |
 
-<Note>Treasury value includes assets held in DAO wallets **and** LP positions.</Note>
-
+<Note>Treasury value includes assets held in DAO wallets **and** LP positions. For runway, use `monthsOfRunway` in `/v1/dao/treasury/overview` or `/v1/dao/treasury/runway-breakdown`.</Note>
 ---
 
 ## GET /v1/dao/treasury/chart
@@ -114,7 +138,6 @@ curl -H "x-api-key: YOUR_KEY" \
 |-------|-------------|
 | `timestamp` | UTC timestamp for this data point |
 | `value` | Treasury USD value at this timestamp |
-
 ---
 
 ## GET /v1/dao/treasury/nav-as-breakdown
@@ -201,92 +224,6 @@ curl -H "x-api-key: YOUR_KEY" \
 <Note>
   The project's own token never counts toward NAV, even when the treasury holds it. It appears in `excludedFromNav` instead, and the matching token balances are subtracted from supply in `supplyAdjustments`.
 </Note>
-
----
-
-## GET /v1/dao/treasury/nav-as-chart
-
-Returns NAV/AS over time alongside token price, adjusted supply, and premium or discount.
-
-**Parameters:** `slug` (required), `range`
-
-`range` accepts `1D`, `1W`, `1M`, `3M`, or `ALL`. The range sets the spacing between points: `1W` returns hourly points, `3M` returns 12-hourly points.
-
-```bash
-curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/dao/treasury/nav-as-chart?slug=solomon&range=1W"
-```
-
-<Accordion title="Example Response">
-```json
-{
-  "data": {
-    "range": "1W",
-    "resolution": "hour",
-    "launchStatus": "active",
-    "today": "2026-10-16T05:00:00.000Z",
-    "historical": [
-      {
-        "timestamp": "2026-10-09T06:00:00.000Z",
-        "navAs": "0.642785012679927958",
-        "tokenPrice": "0.925763049614366000",
-        "adjustedSupply": "8660792.700708000000000000",
-        "discountPremium": "44.023745319548348450"
-      }
-    ]
-  }
-}
-```
-</Accordion>
-
-| Field | Description |
-|-------|-------------|
-| `resolution` | Spacing between points, set by `range` (e.g. `hour`, `12hour`) |
-| `historical[].navAs` | NAV per adjusted share at this point |
-| `historical[].tokenPrice` | Spot token price at this point |
-| `historical[].adjustedSupply` | Adjusted supply used for NAV/AS at this point |
-| `historical[].discountPremium` | Premium or discount to NAV/AS in %. Formula: `(tokenPrice − navAs) ÷ navAs × 100`. Positive = premium, negative = discount |
-
----
-
-## GET /v1/dao/treasury/premium-discount-breakdown
-
-Returns the current premium or discount to NAV/AS, with the low, mean, and high values and when the low and high occurred. Powers the **Prem/Disc** card.
-
-**Parameters:** `slug` (required), `timestamp`
-
-```bash
-curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/dao/treasury/premium-discount-breakdown?slug=solomon"
-```
-
-<Accordion title="Example Response">
-```json
-{
-  "data": {
-    "snapshotAt": "2026-10-16T05:00:17.407Z",
-    "spotPrice": "0.741050591747177600",
-    "navPerAdjustedShare": "0.638262459152071838",
-    "low": "-38.920023923255671799",
-    "lowAt": "2026-02-05T21:00:00.000Z",
-    "mean": "-3.742005579529598862",
-    "high": "79.983076294771995207",
-    "highAt": "2026-09-23T17:00:43.395Z"
-  }
-}
-```
-</Accordion>
-
-| Field | Description |
-|-------|-------------|
-| `spotPrice` | Token price at the snapshot |
-| `navPerAdjustedShare` | NAV/AS at the snapshot |
-| `low` / `lowAt` | Deepest discount (or smallest premium) in %, and when it occurred |
-| `mean` | Average premium or discount in % |
-| `high` / `highAt` | Largest premium in %, and when it occurred |
-
-All percentages use the same convention: positive = trading above NAV/AS (premium), negative = below (discount). The current value is `(spotPrice − navPerAdjustedShare) ÷ navPerAdjustedShare × 100`.
-
 ---
 
 ## GET /v1/dao/treasury/runway-breakdown
@@ -324,7 +261,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `runwayIncludingLpMonths` | Formula: `(nonNativeTreasuryValueUsd + nonNativeLpValueUsd) ÷ monthlySpendLimitUsd` |
 
 The two treasury inputs add up to NAV: `nonNativeTreasuryValueUsd + nonNativeLpValueUsd = netAssetValueUsd` in `/v1/dao/treasury/nav-as-breakdown`.
-
 ---
 
 ## GET /v1/dao/asset-allocation-breakdown
@@ -357,7 +293,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `totalValue` | Total USD value across all categories |
 | `categories[].name` | Category label (e.g. `Main`, `LP Positions`) |
 | `categories[].value` | USD value held in this category |
-
 ---
 
 ## GET /v1/dao/list-asset-allocation-breakdown
@@ -400,7 +335,6 @@ curl -H "x-api-key: YOUR_KEY" \
 |-------|-------------|
 | `categories[].accounts` | Individual wallets within this category with their USD values |
 | `categories[].tokens` | Token holdings across all wallets in this category |
-
 ---
 
 ## GET /v1/dao/native-token-accounts
@@ -443,7 +377,114 @@ curl -H "x-api-key: YOUR_KEY" \
 | `accounts[].name` | Labeled wallet name |
 | `accounts[].amount` | Raw token amount in this wallet |
 | `accounts[].value` | USD value in this wallet |
+---
 
+## GET /v1/dao/token-supply/overview
+
+Returns aggregate token supply statistics — total minted, burned, and net supply.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply/overview?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalMint": "25800002",
+    "totalBurn": "29.41",
+    "resultingSupply": "25799972.59",
+    "netChange": "1.75",
+    "symbol": "SOLO",
+    "publicKey": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalMint` | Cumulative tokens minted |
+| `totalBurn` | Cumulative tokens burned |
+| `resultingSupply` | Current net supply. Formula: `totalMint - totalBurn` |
+| `netChange` | Net supply change over the tracked period |
+---
+
+## GET /v1/dao/token-supply
+
+Returns the full mint and burn event ledger, linked to governance proposals where applicable.
+
+**Parameters:** `slug` (required), `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply?slug=solomon&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 6 },
+  "data": [
+    {
+      "id": 19589,
+      "timestamp": "2026-05-21T07:51:06.027Z",
+      "type": "Mint",
+      "amount": "1",
+      "resultingSupply": "25799972.83",
+      "change": "0.000004",
+      "priceAtTime": "1",
+      "usdValue": "1",
+      "signature": null,
+      "proposal": null
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `type` | `Mint` or `Burn` |
+| `amount` | Token amount of this event |
+| `resultingSupply` | Total supply after this event |
+| `change` | Percentage change to supply from this event |
+| `priceAtTime` | Token price (USD) at the time of the event |
+| `usdValue` | USD value of the mint or burn |
+| `signature` | Solana transaction hash (null if not recorded) |
+| `proposal` | Linked governance proposal, if applicable |
+---
+
+## GET /v1/dao/token-supply/chart
+
+Returns daily circulating supply history.
+
+**Parameters:** `slug` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/token-supply/chart?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": [
+    { "period": "2026-05-28T00:00:00.000Z", "supply": 25799972.67, "interval": "day" },
+    { "period": "2026-05-29T00:00:00.000Z", "supply": 25799972.67, "interval": "day" }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `period` | Start of this time interval |
+| `supply` | Circulating supply on this date |
+| `interval` | Granularity of the data point (e.g. `day`) |
 ---
 
 ## GET /v1/dao/revenues
@@ -480,7 +521,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `revenue` | Total USD revenue for this period |
 | `details[].source` | Revenue source label (e.g. `Protocol fees`) |
 | `details[].revenue` | USD revenue from this source |
-
 ---
 
 ## GET /v1/dao/total-revenue
@@ -503,7 +543,6 @@ curl -H "x-api-key: YOUR_KEY" \
 }
 ```
 </Accordion>
-
 ---
 
 ## GET /v1/dao/expenses
@@ -541,7 +580,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `expense` | Total USD expenses for this period |
 | `details[].source` | Expense category label |
 | `details[].expense` | USD amount for this category |
-
 ---
 
 ## GET /v1/dao/total-expense
@@ -564,7 +602,6 @@ curl -H "x-api-key: YOUR_KEY" \
 }
 ```
 </Accordion>
-
 ---
 
 ## GET /v1/dao/project-timeline

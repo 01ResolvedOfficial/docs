@@ -41,6 +41,11 @@
             "pages": [
               "index",
               "essentials/authentication",
+              {
+                "type": "link",
+                "title": "API Reference",
+                "href": "https://01resolved.com/docs/api-reference/introduction"
+              },
               "essentials/rate-limits"
             ]
           },
@@ -66,20 +71,17 @@
             "pages": [
               "api-reference/project/overview",
               "api-reference/project/financials",
+              "api-reference/project/account-registry",
               "api-reference/project/movements",
               "api-reference/project/proposals"
             ]
           },
           {
-            "group": "Decision Markets",
-            "pages": [
-              "api-reference/decision-markets/index"
-            ]
-          },
-          {
             "group": "Ownership Coin Market",
             "pages": [
-              "api-reference/ownership-coin-market/index"
+              "api-reference/ownership-coin-market/index",
+              "api-reference/decision-markets/index",
+              "api-reference/trader-details"
             ]
           },
           {

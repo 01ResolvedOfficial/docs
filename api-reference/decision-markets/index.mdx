@@ -1,10 +1,10 @@
 ---
-title: "Decision Markets"
+title: "Decision Markets Overview"
 description: "Active, resolved, and live decision markets across all ownership coin projects."
 icon: "scale-balanced"
 ---
 
-These endpoints return decision market data aggregated across **all** ownership coin projects. For proposal data scoped to a specific project, see [Project > Proposals](/api-reference/project/proposals).
+These endpoints return decision market data aggregated across **all** ownership coin projects. For proposal data scoped to a specific project, see [Project > Decision Markets](/api-reference/project/proposals).
 
 ---
 
@@ -36,7 +36,51 @@ curl -H "x-api-key: YOUR_KEY" \
 | `totalProposals` | Total proposals ever created across all projects |
 | `totalVolume` | Cumulative USD trading volume across all decision markets |
 | `totalTrades` | Total individual trades placed across all decision markets |
+---
 
+## GET /v1/global-dashboard/projects
+
+Returns all ownership coin projects with their proposal activity summary.
+
+**Parameters:** `limit`, `page`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/projects?limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 26 },
+  "data": [
+    {
+      "organizationSlug": "jurassic-finance",
+      "organizationName": "Jurassic Finance",
+      "organizationImageUrl": "https://imagedelivery.net/...",
+      "proposalCount": 1,
+      "lastProposalStatus": "live",
+      "lastProposalEndDate": "2026-06-05T03:38:36.000Z"
+    },
+    {
+      "organizationSlug": "metadao",
+      "organizationName": "MetaDAO",
+      "organizationImageUrl": "https://imagedelivery.net/...",
+      "proposalCount": 37,
+      "lastProposalStatus": "resolved",
+      "lastProposalEndDate": "2026-05-18T03:43:13.000Z"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `organizationSlug` | Project slug. Use with [Project](/api-reference/project/overview) endpoints for detailed data |
+| `proposalCount` | Total proposals created by this project |
+| `lastProposalStatus` | Status of the most recent proposal: `live` or `resolved` |
+| `lastProposalEndDate` | End date of the most recent proposal |
 ---
 
 ## GET /v1/global-dashboard/decision-markets
@@ -83,11 +127,10 @@ curl -H "x-api-key: YOUR_KEY" \
 
 | Field | Description |
 |-------|-------------|
-| `projectSlug` | The project's slug. Use with [Project > Proposals](/api-reference/project/proposals) endpoints for deeper data |
+| `projectSlug` | The project's slug. Use with [Project > Decision Markets](/api-reference/project/proposals) endpoints for deeper data |
 | `publicKey` | The proposal's onchain public key |
 | `status` | Current state: `live` or `resolved` |
 | `result` | Outcome for resolved proposals: `approved` or `rejected`. Empty string if still live |
-
 ---
 
 ## GET /v1/global-dashboard/projects/decision-markets

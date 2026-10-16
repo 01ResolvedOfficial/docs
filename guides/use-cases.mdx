@@ -15,7 +15,7 @@ curl -H "x-api-key: YOUR_KEY" \
   "https://api.01resolved.com/v1/global-dashboard/projects-launch"
 ```
 
-Returns all 12+ ownership coins with `tokenUsdPrice`, `treasuryValue`, `netAssetValue`, `mNAV`, `premDisc`, and `monthsOfRunway` for each.
+Returns every ownership coin with `tokenUsdPrice`, `treasuryValue`, `netAssetValue`, `mNAV`, `premDisc`, and `monthsOfRunway` for each.
 
 ---
 
@@ -44,7 +44,7 @@ Check `proposalTwapStatus`: `approve`, `reject`, or `pending`. Use `approveRejec
 ## 4. Full treasury breakdown for a project
 
 ```bash
-# Headline: total balance, NAV, runway
+# Headline: NAV, NAV/AS, runway range, monthly allowance
 curl -H "x-api-key: YOUR_KEY" \
   "https://api.01resolved.com/v1/dao/treasury/overview?slug=metadao"
 

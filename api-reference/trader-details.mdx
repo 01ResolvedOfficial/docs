@@ -1,0 +1,642 @@
+---
+title: "Trader Details"
+description: "Holdings, decision market activity, and ICO participation for any wallet, across every ownership coin project."
+icon: "wallet"
+---
+
+These endpoints power the **Trader Details** page on 01Resolved. Each one looks up a single Solana wallet with the `walletPublicKey` query parameter and covers every ownership coin project unless you pass `slug` where it is supported.
+
+<Warning>
+  The parameter is `walletPublicKey`. Using `wallet`, `address`, or `walletAddress` returns a 400 error.
+</Warning>
+
+Timestamps on this page are Unix seconds unless shown as ISO 8601 strings.
+
+---
+
+## Keeping holdings current
+
+Holdings and wallet value come from a saved snapshot, not a live read. Every holdings response carries `holdingsLastUpdate`, and the snapshot only changes when a refresh runs.
+
+1. Check `holdingsLastUpdate` in `/v1/trading-activity/special-wallet/holdings/overview`.
+2. If it is older than you need, call `POST /v1/trading-activity/special-wallet/holdings/refresh`. It returns a `jobId` straight away.
+3. Poll `/v1/trading-activity/special-wallet/holdings/refresh-status?jobId=` until `status` is `completed`, then read holdings again.
+
+A full refresh usually finishes within seconds. This is the same action as the **Update** button on the Trader Details page.
+
+<Note>
+  Do not rely on `needsRefresh` to decide when to refresh. It can read `false` on a snapshot that is weeks old. Compare `holdingsLastUpdate` with the current time instead.
+</Note>
+
+---
+
+## GET /v1/trading-activity/special-wallet/overview
+
+Returns the wallet summary shown at the top of the Trader Details page: decision market trading totals, wallet value, wallet age, and snapshot status.
+
+**Parameters:** `walletPublicKey` (required), `slug`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/overview?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalVolume": 5923.36397,
+    "totalTrades": 1,
+    "totalUniqueProposals": 1,
+    "avgTradeSize": 5923.36397,
+    "medianTradeSize": 5923.36397,
+    "maxTradeSize": 5923.36397,
+    "walletCreationTime": 1630427208,
+    "walletValue": "212398.8740717089558034399901265994476",
+    "unpricedTokenCount": 198,
+    "walletValueLastUpdate": 1792130941,
+    "holdingsLastUpdate": 1792130941,
+    "needsRefresh": false,
+    "historySyncStatus": "pending",
+    "refreshLimited": false,
+    "refreshRetryAfterSeconds": null,
+    "balanceRefreshStatus": "cached",
+    "refreshJob": null
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalVolume` | Total USD this wallet has traded in decision markets |
+| `totalTrades` | Number of decision market trades |
+| `totalUniqueProposals` | Number of distinct proposals traded |
+| `avgTradeSize` / `medianTradeSize` / `maxTradeSize` | Trade size statistics in USD |
+| `walletCreationTime` | When the wallet was created onchain. Used for the **Wallet Age** figure |
+| `walletValue` | Total USD value of the wallet at the last snapshot |
+| `holdingsLastUpdate` | When the holdings snapshot was taken. See [Keeping holdings current](#keeping-holdings-current) |
+| `refreshLimited` / `refreshRetryAfterSeconds` | Whether refreshes for this wallet are temporarily limited, and how long to wait before the next one |
+| `refreshJob` | The refresh job in progress for this wallet, if any |
+
+---
+
+## GET /v1/trading-activity/special-wallet/holdings/overview
+
+Returns the wallet's asset allocation: how much of its value sits in ownership coins versus other tokens. Powers the summary cards on the **Holdings** tab.
+
+**Parameters:** `walletPublicKey` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/holdings/overview?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalAssets": 248,
+    "ownershipCoinsValue": "27186.128366946120394932276832",
+    "otherValue": "185212.7457047628354085077132945994476",
+    "walletValue": "212398.8740717089558034399901265994476",
+    "ownershipSharePercent": "12.799563314901418543",
+    "otherSharePercent": "87.200436685098581457",
+    "nativeBalance": "0.308640078",
+    "nativeValue": "32.58591969566971167653628",
+    "unpricedTokenCount": 198,
+    "walletValueLastUpdate": 1792130941,
+    "holdingsLastUpdate": 1792130941,
+    "needsRefresh": false,
+    "historySyncStatus": "pending",
+    "refreshLimited": false,
+    "refreshRetryAfterSeconds": null
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalAssets` | Number of distinct tokens in the wallet, priced or not |
+| `ownershipCoinsValue` | USD value of ownership coins held |
+| `otherValue` | USD value of every other priced token, including SOL |
+| `walletValue` | Formula: `ownershipCoinsValue + otherValue` |
+| `ownershipSharePercent` / `otherSharePercent` | Split of `walletValue` between ownership coins and everything else |
+| `nativeBalance` / `nativeValue` | SOL balance and its USD value |
+| `unpricedTokenCount` | Tokens with no available price. They are excluded from every value above |
+| `historySyncStatus` | Progress of the wallet's transfer history sync, e.g. `pending` or `completed` |
+
+---
+
+## GET /v1/trading-activity/special-wallet/holdings
+
+Returns the ownership coins the wallet holds, with value, holder rank, and share of the wallet's ownership coin basket. Powers the holdings table on the **Holdings** tab.
+
+**Parameters:** `walletPublicKey` (required), `limit`, `page`, `search`, `sort`, `order`
+
+`sort` accepts `value`, `balance`, `holderRank`, `projectName`, or `basketShare`. `order` accepts `ASC` or `DESC`.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/holdings?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": {
+    "totalItems": 3,
+    "currentPage": 1,
+    "needsRefresh": false,
+    "historySyncStatus": "pending",
+    "holdingsLastUpdate": 1792130941
+  },
+  "data": [
+    {
+      "tokenAddress": "CARSsxWPkpQWvfyRBwfGMGvysJBHdHGfE46X5MNgmeta",
+      "tokenSymbol": "CARS",
+      "tokenName": "Rip Cars",
+      "projectName": "Rip Cars",
+      "projectSlug": "rip-cars",
+      "balance": 150000,
+      "usdPrice": 0.16628888945140238,
+      "holderRank": 28,
+      "percentageOfTotalSupply": 0.38760072,
+      "value": 24943.333417710357,
+      "basketSharePercent": "91.750223058746994174",
+      "syncedAt": 1792134021
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `tokenAddress` | The ownership coin's mint. Use with `token-flow-chart` and the per-project refresh |
+| `projectSlug` | The project's slug, for use with every project endpoint |
+| `balance` | Tokens held, already adjusted for decimals |
+| `holderRank` | The wallet's rank among all holders of this token, where 1 is the largest |
+| `percentageOfTotalSupply` | Share of the token's total supply held by this wallet |
+| `value` | Formula: `balance × usdPrice` |
+| `basketSharePercent` | Share of the wallet's ownership coin value in this token. Shown as **% of Basket** |
+| `syncedAt` | When this token's balance was last synced |
+
+Only ownership coins appear in this list. Other tokens are counted in `otherValue` on `holdings/overview`.
+
+---
+
+## GET /v1/trading-activity/special-wallet/token-flow-chart
+
+Returns how the wallet's position in one ownership coin changed over time: tokens acquired, tokens reduced, and net accumulation per period. Opens when you expand a row in the holdings table.
+
+**Parameters:** `walletPublicKey` (required), `tokenAddress` (required), `interval`, `days`, `from`, `to`
+
+`interval` accepts `hour`, `day`, `week`, or `month`. With no range given, it returns daily points for the last 31 days.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/token-flow-chart?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS&tokenAddress=CARSsxWPkpQWvfyRBwfGMGvysJBHdHGfE46X5MNgmeta"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "tokenAddress": "CARSsxWPkpQWvfyRBwfGMGvysJBHdHGfE46X5MNgmeta",
+    "tokenSymbol": "CARS",
+    "tokenName": "Rip Cars",
+    "interval": "day",
+    "from": 1789516800,
+    "to": 1792195199,
+    "totalInflowAmount": 0,
+    "totalOutflowAmount": 0,
+    "netAmount": 0,
+    "points": [
+      {
+        "timestamp": 1789516800,
+        "acquired": 0,
+        "reduced": 0,
+        "netAccumulation": 0,
+        "valueUsd": 0,
+        "position": { "openingBalance": null, "closingBalance": null, "percentChange": null }
+      }
+    ],
+    "holderRank": 28,
+    "syncedAt": 1792134021
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalInflowAmount` / `totalOutflowAmount` | Tokens received and sent across the whole range |
+| `netAmount` | Formula: `totalInflowAmount − totalOutflowAmount` |
+| `points[].acquired` / `points[].reduced` | Tokens received and sent in that period |
+| `points[].netAccumulation` | Net change in that period |
+| `points[].valueUsd` | USD value of that period's net change |
+| `points[].position` | Opening and closing balance for the period, and the percentage change. `null` when there was no transfer activity |
+
+---
+
+## POST /v1/trading-activity/special-wallet/holdings/refresh
+
+Starts a background refresh of the wallet's balances and ownership coin transfer history. Returns immediately with a job to poll.
+
+**Body:** `walletPublicKey` (required)
+
+```bash
+curl -X POST -H "x-api-key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"walletPublicKey": "JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS"}' \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/holdings/refresh"
+```
+
+<Accordion title="Example Response (202 Accepted)">
+```json
+{
+  "meta": { "code": 202, "message": "Successful" },
+  "data": {
+    "jobId": "91f14ed0-bdc9-490f-88bb-dd422f574101",
+    "walletPublicKey": "JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS",
+    "status": "queued",
+    "alreadyRunning": false,
+    "snapshotRefreshed": false
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `jobId` | Pass to `/v1/trading-activity/special-wallet/holdings/refresh-status` |
+| `status` | `queued` when the job is first accepted |
+| `alreadyRunning` | Whether a refresh for this wallet was already in progress |
+
+<Note>
+  Refreshes can be rate limited per wallet. If the request is refused with `429`, or `refreshLimited` is `true` on the overview endpoints, wait `refreshRetryAfterSeconds` before trying again.
+</Note>
+
+---
+
+## POST /v1/trading-activity/special-wallet/holdings/project/refresh
+
+Refreshes the balance and transfer history for one ownership coin only. Faster than a full refresh when you only need one token. Holder rank is not recalculated.
+
+**Body:** `walletPublicKey` (required), `tokenAddress` (required, from the holdings list)
+
+```bash
+curl -X POST -H "x-api-key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"walletPublicKey": "JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS", "tokenAddress": "CARSsxWPkpQWvfyRBwfGMGvysJBHdHGfE46X5MNgmeta"}' \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/holdings/project/refresh"
+```
+
+Returns a `jobId` in the same shape as the full refresh. Poll it with `refresh-status`.
+
+---
+
+## GET /v1/trading-activity/special-wallet/holdings/refresh-status
+
+Returns the progress of a refresh job.
+
+**Parameters:** `jobId` (required, a UUID from either refresh endpoint)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/holdings/refresh-status?jobId=91f14ed0-bdc9-490f-88bb-dd422f574101"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "jobId": "91f14ed0-bdc9-490f-88bb-dd422f574101",
+    "walletPublicKey": "JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS",
+    "status": "completed",
+    "progress": {
+      "totalMints": 28,
+      "processedMints": 28,
+      "processedAccounts": 28,
+      "incompleteAccounts": 0,
+      "scannedTransactions": 116
+    },
+    "requestedAt": 1792134705,
+    "finishedAt": 1792134709,
+    "holdingsLastUpdate": 1792134705,
+    "historyCompletedAt": 1792134709,
+    "error": null
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `status` | `queued`, `running`, or `completed` |
+| `progress.processedMints` / `progress.totalMints` | Tokens processed so far, out of the total |
+| `progress.incompleteAccounts` | Accounts whose history did not finish. Call the refresh again to resume from where it stopped |
+| `holdingsLastUpdate` | The new snapshot time once the job completes |
+| `error` | Error message if the job failed, otherwise `null` |
+
+---
+
+## GET /v1/trading-activity/special-wallet/decision-markets
+
+Returns every proposal the wallet has traded, with its volume, trade count, and whether its trading leaned pass or fail. Powers the **Decision Markets** tab.
+
+**Parameters:** `walletPublicKey` (required), `slug`, `limit`, `page`, `search`, `sort`, `order`
+
+`sort` accepts `netAlignment`, `proposalVolumeConc`, `proposalTradeConc`, `volume`, `trades`, or `lastTradeTime`.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/decision-markets?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 1, "currentPage": 1 },
+  "data": [
+    {
+      "proposalId": 11818,
+      "proposalPublicKey": "DuVWckJPQ2z7v3Xm95ZXA9QzUDicJof8TnSrENYBQDYd",
+      "proposalName": "🔥 Futarchy Proposal 02 — Team Token Allocation",
+      "proposalState": "succeeded",
+      "projectName": "Flash Trade",
+      "projectSlug": "flash-trade",
+      "projectSymbol": "FAF",
+      "netAlignment": 5923.36397,
+      "marketAlignment": "pass",
+      "passAlignedVolume": 5923.36397,
+      "failAlignedVolume": 0,
+      "walletVolume": 5923.36397,
+      "walletTrades": 1,
+      "proposalVolumeConc": "17.032977336549959577",
+      "proposalTradeConc": "1.612903225806451613",
+      "lastTradeTime": 1782408856,
+      "twapStartTime": 1782322261
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `passAlignedVolume` / `failAlignedVolume` | USD volume that backed pass (buying pass or selling fail) and fail (buying fail or selling pass) |
+| `netAlignment` | Formula: `passAlignedVolume − failAlignedVolume` |
+| `marketAlignment` | Which side the wallet's trading leaned toward: `pass` or `fail` |
+| `walletVolume` / `walletTrades` | The wallet's total USD volume and trade count on this proposal |
+| `proposalVolumeConc` | The wallet's share of all volume on this proposal (%) |
+| `proposalTradeConc` | The wallet's share of all trades on this proposal (%) |
+| `proposalState` | The proposal's outcome, e.g. `succeeded` |
+
+---
+
+## GET /v1/trading-activity/special-wallet/proposal-breakdown/overview
+
+Returns the wallet's activity on one proposal: how much it traded before the TWAP window opened versus during it, and an hourly breakdown. Opens when you expand a proposal on the **Decision Markets** tab.
+
+**Parameters:** `walletPublicKey` (required), `proposalPublicKey` (required), `window`
+
+`window` accepts `preTwap` or `twapWindow`.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/proposal-breakdown/overview?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS&proposalPublicKey=DuVWckJPQ2z7v3Xm95ZXA9QzUDicJof8TnSrENYBQDYd"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "proposalId": 11818,
+    "proposalPublicKey": "DuVWckJPQ2z7v3Xm95ZXA9QzUDicJof8TnSrENYBQDYd",
+    "proposalName": "🔥 Futarchy Proposal 02 — Team Token Allocation",
+    "twapStartTime": 1782322261,
+    "hourlyWindowStart": 1782237600,
+    "hourlyWindowEnd": 1782493200,
+    "convictionTiming": {
+      "preTwapVolume": 0,
+      "twapWindowVolume": 5923.36397,
+      "preTwapVolumePercent": 0,
+      "twapWindowVolumePercent": 100,
+      "preTwapTrades": 0,
+      "twapWindowTrades": 1
+    },
+    "hourlyTrades": [
+      {
+        "timestamp": 1782237600,
+        "trades": 0,
+        "volume": 0,
+        "preTwapTrades": 0,
+        "twapWindowTrades": 0,
+        "preTwapVolume": 0,
+        "twapWindowVolume": 0,
+        "passVolume": 0,
+        "failVolume": 0,
+        "netVolume": 0,
+        "isPreTwap": true
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `convictionTiming` | The wallet's volume and trades before the TWAP window opened (`preTwap`) and during it (`twapWindow`), in USD and as a percentage |
+| `hourlyTrades` | One entry per hour between `hourlyWindowStart` and `hourlyWindowEnd`, with trades, volume, and pass/fail split |
+| `hourlyTrades[].isPreTwap` | Whether that hour falls before the TWAP window opened at `twapStartTime` |
+
+---
+
+## GET /v1/trading-activity/special-wallet/proposal-breakdown/trades
+
+Returns the wallet's individual trades on one proposal.
+
+**Parameters:** `walletPublicKey` (required), `proposalPublicKey` (required), `window`, `marketType`, `direction`, `limit`, `page`, `sort`, `order`
+
+`marketType` accepts `pass` or `fail`. `direction` accepts `buy` or `sell`. `window` accepts `preTwap` or `twapWindow`.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/proposal-breakdown/trades?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS&proposalPublicKey=DuVWckJPQ2z7v3Xm95ZXA9QzUDicJof8TnSrENYBQDYd&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 1, "currentPage": 1 },
+  "data": [
+    {
+      "orderId": 826973,
+      "timeStamp": 1782408856,
+      "marketType": "fail",
+      "direction": "sell",
+      "amount": 2359869.410186,
+      "price": 0.0025100388794535595,
+      "value": "5923.363969999999811243257067",
+      "marketDirectionConc": "20.876050205140304517",
+      "proposalTradeConc": "1.612903225806451613",
+      "proposalTrades": 62,
+      "isPreTwap": false,
+      "txHash": "678mpgLMBB1tnNJvtNwyKDDnL8xDJZqLdzoaD6zSuXC8UAXGM8z7fT9qGcnigPsfrG2i32"
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `marketType` / `direction` | Which market was traded (`pass` or `fail`) and which way (`buy` or `sell`) |
+| `amount` / `price` / `value` | Tokens traded, price per token, and USD value |
+| `marketDirectionConc` | This trade's share of all volume in the same market and direction (%) |
+| `isPreTwap` | Whether the trade happened before the TWAP window opened |
+| `txHash` | Solana transaction signature |
+
+Note the field is `timeStamp` here, with a capital S.
+
+---
+
+## GET /v1/trading-activity/special-wallet
+
+Returns every decision market trade the wallet has placed, across all projects.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `walletPublicKey` | string | **Yes** | Solana wallet address to look up |
+| `slug` | string | No | Filter to a specific project |
+| `limit` | number | No | Items per page |
+| `page` | number | No | Page number |
+| `search` | string | No | Free-text search |
+| `sort` | string | No | Sort field: `timestamp`, `value`, `price`, `size`, `proposalVolumeConc`, `marketDirectionConc`, `proposalTradeConc` |
+| `order` | string | No | `ASC` or `DESC` (default `DESC`) |
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet?walletPublicKey=AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5&limit=10"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 3616 },
+  "data": [
+    {
+      "orderId": 822890,
+      "trader": "AWjCySKayUEQFdyBc4zLu7i35BfM3kxAmBxv8qwy1SC5",
+      "timestamp": "2026-06-02T21:52:56.000Z",
+      "organizationName": "Jurassic Finance",
+      "organizationSlug": "jurassic-finance",
+      "proposalName": "Establish Legal Structure for First SPV",
+      "proposalPublicKey": "8M93PPtyJFthyy8MyiQ5ayxrg2KG7LwemoTEYo7ikc5j",
+      "marketType": "fail",
+      "direction": "sell",
+      "value": "96.71",
+      "price": "0.03783",
+      "size": "2556.61",
+      "marketDirectionConc": "28.87",
+      "proposalVolumeConc": "46.96",
+      "walletConc": "99.01",
+      "txHash": "tm4xjRaTCpt7..."
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `marketDirectionConc` | This trade's share of total volume in its market and direction for this proposal (%) |
+| `proposalVolumeConc` | This trade's share of total proposal volume (%) |
+| `walletConc` | This wallet's share of total volume in its market and direction for this proposal (%) |
+
+---
+
+## GET /v1/trading-activity/special-wallet/ico-participation/overview
+
+Returns the wallet's totals across every ownership coin ICO it took part in. Powers the summary cards on the **ICO Participation** tab.
+
+**Parameters:** `walletPublicKey` (required)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/ico-participation/overview?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "totalIcos": 2,
+    "totalContributed": 7500,
+    "totalRefunded": 7355.687058,
+    "totalAllocationValue": 144.3129423
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `totalIcos` | Number of ICOs the wallet contributed to |
+| `totalContributed` | Total USDC committed across those ICOs |
+| `totalRefunded` | Total USDC returned, for example when a raise was oversubscribed |
+| `totalAllocationValue` | Current USD value of the tokens the wallet received |
+
+---
+
+## GET /v1/trading-activity/special-wallet/ico-participation
+
+Returns each ICO the wallet took part in, with its contribution, refund, and token allocation. Powers the table on the **ICO Participation** tab.
+
+**Parameters:** `walletPublicKey` (required), `limit`, `page`, `search`, `sort`, `order`
+
+`sort` accepts `contribution`, `projectName`, or `allocation`.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/trading-activity/special-wallet/ico-participation?walletPublicKey=JwV3M6PvMykzYeQznSeZA7WdwTvyaXCC4dFWoKvSYZS"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "meta": { "totalItems": 2, "currentPage": 1 },
+  "data": [
+    {
+      "projectSlug": "umbra",
+      "projectName": "Umbra",
+      "tokenSymbol": "UMBRA",
+      "contribution": 5000,
+      "earlyContribution": 0,
+      "midContribution": 0,
+      "lateContribution": 5000,
+      "unknownTimingContribution": 0,
+      "refunded": 4903.190672,
+      "isRefunding": false,
+      "allocation": 322.697761,
+      "allocationValue": 96.8093283,
+      "icoPrice": 0.3
+    }
+  ]
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `contribution` | USDC the wallet committed to this ICO |
+| `earlyContribution` / `midContribution` / `lateContribution` | How the contribution was split across the early, middle, and late part of the raise. `unknownTimingContribution` covers amounts that could not be placed |
+| `refunded` | USDC returned to the wallet after the raise closed |
+| `isRefunding` | Whether a refund is still in progress |
+| `allocation` | Tokens the wallet received |
+| `allocationValue` | Current USD value of `allocation` |
+| `icoPrice` | Token price during the ICO |

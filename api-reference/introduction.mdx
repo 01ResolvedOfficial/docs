@@ -25,13 +25,16 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 <CardGroup cols={2}>
   <Card title="Project" icon="building" href="/api-reference/project/overview">
-    Token metrics, treasury, financials, movements, ICO data, and proposal analytics scoped to a single project.
-  </Card>
-  <Card title="Decision Markets" icon="scale-balanced" href="/api-reference/decision-markets/index">
-    Aggregate decision market stats, all proposals across all projects, and live market TWAP status.
+    Token metrics, financials, account registry, movements, ICO data, and decision market analytics scoped to a single project.
   </Card>
   <Card title="Ownership Coin Market" icon="globe" href="/api-reference/ownership-coin-market/index">
     Global market cap, treasury totals, ICO launches, completed raises, and ecosystem-wide search.
+  </Card>
+  <Card title="Decision Markets Overview" icon="scale-balanced" href="/api-reference/decision-markets/index">
+    Aggregate decision market stats, all proposals across all projects, and live market TWAP status.
+  </Card>
+  <Card title="Trader Details" icon="wallet" href="/api-reference/trader-details">
+    Holdings, decision market activity, and ICO participation for any wallet, with on-demand refresh.
   </Card>
   <Card title="API Key" icon="key" href="/api-reference/api-key">
     Look up details about the API key currently in use.

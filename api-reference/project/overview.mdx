@@ -30,7 +30,6 @@ curl -H "x-api-key: YOUR_KEY" \
 <Note>
   This endpoint is live but currently returns `null` for all projects. It is intended to resolve the canonical 01Resolved URL for a given project slug.
 </Note>
-
 ---
 
 ## GET /v1/project-overview
@@ -72,7 +71,89 @@ curl -H "x-api-key: YOUR_KEY" \
 | `circulatingSupply` | Tokens in circulation excluding locked team allocations. Formula: `total supply - performance package tokens` |
 | `icoPrice` | Token price at time of ICO |
 | `projectSubDescription` | Short one-line tagline for the project |
+---
 
+## GET /v1/dao/treasury/nav-as-chart
+
+Returns NAV/AS over time alongside token price, adjusted supply, and premium or discount.
+
+**Parameters:** `slug` (required), `range`
+
+`range` accepts `1D`, `1W`, `1M`, `3M`, or `ALL`. The range sets the spacing between points: `1W` returns hourly points, `3M` returns 12-hourly points.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/nav-as-chart?slug=solomon&range=1W"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "range": "1W",
+    "resolution": "hour",
+    "launchStatus": "active",
+    "today": "2026-10-16T05:00:00.000Z",
+    "historical": [
+      {
+        "timestamp": "2026-10-09T06:00:00.000Z",
+        "navAs": "0.642785012679927958",
+        "tokenPrice": "0.925763049614366000",
+        "adjustedSupply": "8660792.700708000000000000",
+        "discountPremium": "44.023745319548348450"
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `resolution` | Spacing between points, set by `range` (e.g. `hour`, `12hour`) |
+| `historical[].navAs` | NAV per adjusted share at this point |
+| `historical[].tokenPrice` | Spot token price at this point |
+| `historical[].adjustedSupply` | Adjusted supply used for NAV/AS at this point |
+| `historical[].discountPremium` | Premium or discount to NAV/AS in %. Formula: `(tokenPrice − navAs) ÷ navAs × 100`. Positive = premium, negative = discount |
+---
+
+## GET /v1/dao/treasury/premium-discount-breakdown
+
+Returns the current premium or discount to NAV/AS, with the low, mean, and high values and when the low and high occurred. Powers the **Prem/Disc** card.
+
+**Parameters:** `slug` (required), `timestamp`
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/premium-discount-breakdown?slug=solomon"
+```
+
+<Accordion title="Example Response">
+```json
+{
+  "data": {
+    "snapshotAt": "2026-10-16T05:00:17.407Z",
+    "spotPrice": "0.741050591747177600",
+    "navPerAdjustedShare": "0.638262459152071838",
+    "low": "-38.920023923255671799",
+    "lowAt": "2026-02-05T21:00:00.000Z",
+    "mean": "-3.742005579529598862",
+    "high": "79.983076294771995207",
+    "highAt": "2026-09-23T17:00:43.395Z"
+  }
+}
+```
+</Accordion>
+
+| Field | Description |
+|-------|-------------|
+| `spotPrice` | Token price at the snapshot |
+| `navPerAdjustedShare` | NAV/AS at the snapshot |
+| `low` / `lowAt` | Deepest discount (or smallest premium) in %, and when it occurred |
+| `mean` | Average premium or discount in % |
+| `high` / `highAt` | Largest premium in %, and when it occurred |
+
+All percentages use the same convention: positive = trading above NAV/AS (premium), negative = below (discount). The current value is `(spotPrice − navPerAdjustedShare) ÷ navPerAdjustedShare × 100`.
 ---
 
 ## GET /v1/project-overview/market-metrics
@@ -127,7 +208,6 @@ curl -H "x-api-key: YOUR_KEY" \
 <Warning>
   Despite its name, a **positive** `discount.pct` means the token trades at a **premium** to NAV/AS. Negative means a discount.
 </Warning>
-
 ---
 
 ## GET /v1/growth-feed
@@ -223,7 +303,6 @@ The type, returned as `semantics`, says how a day's value is counted:
 <Note>
   Only projects that publish a Growth Feed return data. Currently that is Laso and P2P (`laso-finance`, `p2p-protocol`). Every other project returns `status: "no_source"` and an empty `metrics` array.
 </Note>
-
 ---
 
 ## GET /v1/dao/overview
@@ -267,7 +346,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `baseToStake` | Governance tokens required to open a proposal. Divide by `10^6` |
 | `twapStartDelaySeconds` | Seconds after market open before TWAP starts (86400 = 24 hours) |
 | `teamSponsoredPassThresholdBps` | Pass threshold for team-sponsored proposals in basis points. Negative values lower the required pass edge |
-
 ---
 
 ## GET /v1/project-overview/legals
@@ -300,7 +378,6 @@ curl -H "x-api-key: YOUR_KEY" \
 |-------|-------------|
 | `type` | Document type (e.g. `Founder Covenant`) |
 | `url` | Link to the legal document |
-
 ---
 
 ## GET /v1/legal-entity
@@ -353,7 +430,6 @@ curl -H "x-api-key: YOUR_KEY" \
 <Note>
   Not every project has recorded legal entities. Projects without them return an empty array. The `DAO` / `OpCo` split here matches the `entityType` field used throughout the movement and account endpoints.
 </Note>
-
 ---
 
 ## GET /v1/project-overview/token-distribution
@@ -387,7 +463,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `allocation` | Category name (e.g. `Public Sale/ICO`, `Team & Investors`, `Liquidity`) |
 | `amount` | Raw token amount for this category |
 | `percentage` | Share of total supply as a percentage |
-
 ---
 
 ## GET /v1/project-overview/token-holders
@@ -449,118 +524,6 @@ Balances are refreshed every 30 minutes. `meta.totalItems` gives the total numbe
 <Note>
   The largest holders are often the project's own accounts, such as treasury wallets, the team vesting program, and liquidity pools. Cross-reference `owner` against `/v1/account?slug=` to separate them from outside holders.
 </Note>
-
----
-
-## GET /v1/dao/token-supply/overview
-
-Returns aggregate token supply statistics — total minted, burned, and net supply.
-
-**Parameters:** `slug` (required)
-
-```bash
-curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/dao/token-supply/overview?slug=solomon"
-```
-
-<Accordion title="Example Response">
-```json
-{
-  "data": {
-    "totalMint": "25800002",
-    "totalBurn": "29.41",
-    "resultingSupply": "25799972.59",
-    "netChange": "1.75",
-    "symbol": "SOLO",
-    "publicKey": "SoLo9oxzLDpcq1dpqAgMwgce5WqkRDtNXK7EPnbmeta"
-  }
-}
-```
-</Accordion>
-
-| Field | Description |
-|-------|-------------|
-| `totalMint` | Cumulative tokens minted |
-| `totalBurn` | Cumulative tokens burned |
-| `resultingSupply` | Current net supply. Formula: `totalMint - totalBurn` |
-| `netChange` | Net supply change over the tracked period |
-
----
-
-## GET /v1/dao/token-supply
-
-Returns the full mint and burn event ledger, linked to governance proposals where applicable.
-
-**Parameters:** `slug` (required), `limit`, `page`
-
-```bash
-curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/dao/token-supply?slug=solomon&limit=10"
-```
-
-<Accordion title="Example Response">
-```json
-{
-  "meta": { "totalItems": 6 },
-  "data": [
-    {
-      "id": 19589,
-      "timestamp": "2026-05-21T07:51:06.027Z",
-      "type": "Mint",
-      "amount": "1",
-      "resultingSupply": "25799972.83",
-      "change": "0.000004",
-      "priceAtTime": "1",
-      "usdValue": "1",
-      "signature": null,
-      "proposal": null
-    }
-  ]
-}
-```
-</Accordion>
-
-| Field | Description |
-|-------|-------------|
-| `type` | `Mint` or `Burn` |
-| `amount` | Token amount of this event |
-| `resultingSupply` | Total supply after this event |
-| `change` | Percentage change to supply from this event |
-| `priceAtTime` | Token price (USD) at the time of the event |
-| `usdValue` | USD value of the mint or burn |
-| `signature` | Solana transaction hash (null if not recorded) |
-| `proposal` | Linked governance proposal, if applicable |
-
----
-
-## GET /v1/dao/token-supply/chart
-
-Returns daily circulating supply history.
-
-**Parameters:** `slug` (required)
-
-```bash
-curl -H "x-api-key: YOUR_KEY" \
-  "https://api.01resolved.com/v1/dao/token-supply/chart?slug=solomon"
-```
-
-<Accordion title="Example Response">
-```json
-{
-  "data": [
-    { "period": "2026-05-28T00:00:00.000Z", "supply": 25799972.67, "interval": "day" },
-    { "period": "2026-05-29T00:00:00.000Z", "supply": 25799972.67, "interval": "day" }
-  ]
-}
-```
-</Accordion>
-
-| Field | Description |
-|-------|-------------|
-| `period` | Start of this time interval |
-| `supply` | Circulating supply on this date |
-| `interval` | Granularity of the data point (e.g. `day`) |
-
 ---
 
 ## GET /v1/project-overview/performance-package
@@ -602,7 +565,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `claimed` | Tokens already claimed by the team |
 | `cliff.passed` | Whether the vesting cliff date has been reached |
 | `cliff.daysRemaining` | Days until the cliff date |
-
 ---
 
 ## GET /v1/project-overview/tranche-ladder
@@ -658,7 +620,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `multiplier` | Price multiple of ICO price required to unlock |
 | `priceThreshold` | Absolute token price (USD) required to unlock. Formula: `icoPrice × multiplier` |
 | `state` | Current tranche state: `cliff-twap-pending`, `unlocked`, `locked` |
-
 ---
 
 ## GET /v1/project-overview/unlock-schedule
@@ -690,7 +651,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `date` | Date of this data point |
 | `twap` | Token TWAP price on this date |
 | `cumulativeUnlocked` | Total tokens unlocked as of this date |
-
 ---
 
 ## GET /v1/project-overview/ico-details
@@ -724,7 +684,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `unixTimestampStarted` | Unix timestamp when the ICO started |
 | `secondsForLaunch` | Duration of the ICO in seconds (345600 = 4 days) |
 | `icoSupply` | Tokens allocated to the ICO raise |
-
 ---
 
 ## GET /v1/project-overview/ico-contributor
@@ -764,7 +723,6 @@ curl -H "x-api-key: YOUR_KEY" \
 | `medianContribution` | Median contribution per wallet in USDC |
 | `minimumRaiseAmount` | Minimum raise threshold in USDC |
 | `fundsAccepted` | Total funds accepted (may be less than committed if oversubscribed) |
-
 ---
 
 ## GET /v1/project-overview/ico-contributor/chart
@@ -794,7 +752,6 @@ curl -H "x-api-key: YOUR_KEY" \
 </Accordion>
 
 Each key is a USDC contribution range. The value is the number of wallets that contributed within that range.
-
 ---
 
 ## GET /v1/project-overview/ico-contributor/ico-list
@@ -821,7 +778,6 @@ curl -H "x-api-key: YOUR_KEY" \
 </Accordion>
 
 Useful for understanding investor base overlap across ownership coin projects.
-
 ---
 
 ## GET /v1/project-overview/ico-contributor/investors
