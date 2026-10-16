@@ -83,12 +83,3 @@ Error responses follow the same envelope:
   "data": null
 }
 ```
-
-## Known Issues
-
-The following endpoints have backend bugs and should be avoided:
-
-| Endpoint | Issue | Alternative |
-|----------|-------|-------------|
-| `GET /global-dashboard/completed-launches` | SQL error | Use `/completed-launches/info` instead |
-| `GET /global-dashboard/overview/ownership-coins` | SQL error | Use `/global-dashboard/projects-launch` instead |

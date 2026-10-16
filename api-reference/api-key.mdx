@@ -21,11 +21,20 @@ curl -H "x-api-key: YOUR_KEY" \
   "data": {
     "id": 17,
     "name": "Partner API Key",
-    "isActive": true,
-    "lastUsedAt": "2026-05-21T05:57:20.589Z",
-    "expiresAt": null,
+    "description": "Dashboard integration",
     "type": "partner",
-    "rateLimitPerMinute": 600
+    "status": "active",
+    "isActive": true,
+    "keyPrefix": "01r_ab12cd34",
+    "planTierId": 2,
+    "overagePolicy": "hard_stop",
+    "usageAlertThreshold": 80,
+    "allowanceResetsAt": null,
+    "expiresAt": "2026-12-31T23:59:59.000Z",
+    "lastUsedAt": "2026-10-16T05:41:22.000Z",
+    "revokedAt": null,
+    "createdAt": "2026-09-27T02:13:00.532Z",
+    "updatedAt": "2026-10-16T05:41:22.000Z"
   }
 }
 ```
@@ -33,7 +42,14 @@ curl -H "x-api-key: YOUR_KEY" \
 
 | Field | Description |
 |-------|-------------|
-| `type` | Key type: `partner` (rate limited) or `internal` (no limit) |
-| `rateLimitPerMinute` | Current rate limit for this key |
-| `expiresAt` | Expiry timestamp, or `null` if no expiry |
-| `isActive` | Whether the key is currently valid |
+| `name` / `description` | Label and note set when the key was issued |
+| `type` | Key type, e.g. `partner` |
+| `status` / `isActive` | Whether the key is currently valid. A revoked key has `revokedAt` set |
+| `keyPrefix` | The first characters of the key, for identifying it without exposing the full key |
+| `expiresAt` | Expiry timestamp, or `null` if the key does not expire |
+| `lastUsedAt` | When the key last made a request |
+| `planTierId`, `overagePolicy`, `usageAlertThreshold`, `allowanceResetsAt` | Your plan and usage allowance |
+
+<Note>
+  The response also includes internal IDs, such as the user who created the key. They identify records on 01Resolved's side and need no action from you.
+</Note>

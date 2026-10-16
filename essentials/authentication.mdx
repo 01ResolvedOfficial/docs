@@ -31,7 +31,7 @@ Once approved you will receive an API key to include in all requests.
 
 ## Checking Your Key
 
-Use the `/v1/api-key/current` endpoint to verify your key and check its configuration.
+Use the `/v1/api-key/current` endpoint to verify your key and check its status, plan, and expiry. See [API Key](/api-reference/api-key) for every field.
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
@@ -41,12 +41,22 @@ curl -H "x-api-key: YOUR_API_KEY" \
 ```json
 {
   "data": {
+    "id": 17,
     "name": "Partner API Key",
+    "description": "Dashboard integration",
     "type": "partner",
+    "status": "active",
     "isActive": true,
-    "rateLimitPerMinute": 600,
-    "expiresAt": null,
-    "lastUsedAt": "2026-05-21T05:57:20.589Z"
+    "keyPrefix": "01r_ab12cd34",
+    "planTierId": 2,
+    "overagePolicy": "hard_stop",
+    "usageAlertThreshold": 80,
+    "allowanceResetsAt": null,
+    "expiresAt": "2026-12-31T23:59:59.000Z",
+    "lastUsedAt": "2026-10-16T05:41:22.000Z",
+    "revokedAt": null,
+    "createdAt": "2026-09-27T02:13:00.532Z",
+    "updatedAt": "2026-10-16T05:41:22.000Z"
   }
 }
 ```
