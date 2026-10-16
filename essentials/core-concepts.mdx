@@ -8,7 +8,7 @@ icon: "book-open"
 
 Ownership coins are tokens that give holders verifiable ownership and enforceable rights over an onchain organization. They differ from prior-era tokens because the treasury, IP, mint authority, and major spending decisions are placed under tokenholder-governed market oversight rather than discretionary team control.
 
-01Resolved tracks ownership coins across the MetaDAO ecosystem and beyond by turning treasury flows, proposal outcomes, decision markets, and wallet-level participation into structured intelligence.
+01Resolved tracks ownership coins and other onchain ownership assets across the [MetaDAO](https://metadao.fi) and [Backable](https://www.backable.biz) ecosystems and beyond, turning treasury flows, proposal outcomes, decision markets, and wallet-level participation into structured intelligence.
 
 ## Futarchy
 
@@ -85,15 +85,15 @@ Economic Direction classifies trades by the outcome they economically support, n
 NAV = Treasury Stables + LP Value (non-native side) + Other Non-Native Holdings
 ```
 
-**NAV (AS)** is NAV divided by the adjusted supply. It represents non-native asset backing per economically active token.
+**NAV/AS** (NAV per adjusted share) is NAV divided by the adjusted supply. It represents non-native asset backing per economically active token.
 
 ```
-NAV (AS) = NAV / Adjusted Supply
+NAV/AS = NAV / Adjusted Supply
 
 Adjusted Supply = Total Supply - Protocol-Controlled Tokens - Unvested Allocations
 ```
 
-If NAV (AS) is greater than spot price, the project is trading at a relative discount. If NAV (AS) is less than spot price, the project is trading at a relative premium.
+If NAV/AS is greater than spot price, the project is trading at a relative discount. If NAV/AS is less than spot price, the project is trading at a relative premium.
 
 ## mNAV
 
@@ -110,14 +110,14 @@ An mNAV of 3.0 means the project trades at 3x its non-native asset value.
 The percentage difference between the current token price and NAV per adjusted token supply.
 
 ```
-Premium / Discount = (Spot Price - NAV (AS)) / NAV (AS)
+Premium / Discount = (Spot Price - NAV/AS) / NAV/AS
 ```
 
 Positive = trading at a premium to non-native asset backing. Negative = trading at a discount.
 
 ## OpenBooks
 
-OpenBooks is 01Resolved's financial record system for ownership coins. It turns raw onchain wallet activity into structured financial data by maintaining account registries, classifying treasury movements, linking spending to approved proposals, tracking mint and burn events, and separating DAO-controlled funds from operational or offchain accounts where data is available.
+[OpenBooks](https://openbooks.tech) is financial reporting for onchain businesses, built by 01Resolved. It brings a team's wallets, exchange and bank accounts, and existing books into one reviewed record, classifies the activity, and turns it into monthly management and investor reports. The team decides what is shared and with whom.
 
 ## Coverage and Methodology Notes
 
