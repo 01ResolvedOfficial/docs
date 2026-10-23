@@ -116,6 +116,12 @@
             ]
           },
           {
+            "group": "For Projects",
+            "pages": [
+              "guides/operating-performance"
+            ]
+          },
+          {
             "group": "Reference",
             "pages": [
               "guides/project-slugs"

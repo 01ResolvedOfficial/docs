@@ -1,0 +1,179 @@
+---
+title: "Submitting Operating Performance"
+description: "How project teams get their daily growth metrics onto 01Resolved."
+icon: "chart-simple"
+---
+
+The **Operating Performance** section of a project's Overview tab shows how the business behind an ownership coin is growing: users, volume, transactions, deposits. The numbers come from the team, and getting them onto 01Resolved takes two things:
+
+1. **A completed metrics sheet** that maps 2 to 4 of your growth metrics (ideally 4) to our catalog.
+2. **One endpoint** that returns those metrics as JSON, every day.
+
+<Card title="Copy the metrics sheet" icon="table" href="https://docs.google.com/spreadsheets/d/1VhPiT72lQN-zPap36KxmL_Sw6QfjTjstq-GmKXCwjGU/copy">
+  Opens a copy of the template in your own Google Drive, ready to fill in.
+</Card>
+
+---
+
+## Steps
+
+<Steps>
+  <Step title="Pick your metrics">
+    Choose 2 to 4 metrics from the [catalog below](#metric-catalog) that best show your growth. Your internal names can differ, but the data must match our definition.
+  </Step>
+  <Step title="Fill in the sheet">
+    Make a copy of the template and complete the **Your Metrics** tab: for each metric, your name for it, how you define it, what it tells readers, where the data comes from (with a link), how it's calculated, and the earliest date you have reliable data for.
+  </Step>
+  <Step title="Build your endpoint">
+    Publish one public HTTPS URL that returns your metrics in the [format below](#endpoint-format), backfilled with daily history from your earliest reliable date.
+  </Step>
+  <Step title="Send us the sheet">
+    Paste your endpoint URL into the sheet and send it to the 01Resolved team, or reach us on [Telegram](https://t.me/Official01Resolved). We connect your feed and your metrics go live on 01Resolved and in the API.
+  </Step>
+</Steps>
+
+---
+
+## Metric catalog
+
+Every project picks from the same list, so a metric ID means the same thing on every project. The sheet has full definitions.
+
+| Metric ID | What it measures | Type |
+|-----------|------------------|------|
+| `new_users` | First-time users completing your core action | Flow |
+| `app_downloads` | App downloads or installs | Flow |
+| `total_users` | Cumulative unique users | Stock |
+| `daily_active_users` | Distinct users active that day | Interval unique |
+| `transactions` | Completed core transactions | Flow |
+| `protocol_volume_usd` | USD volume processed | Flow |
+| `value_held_usd` | USD held or deposited (TVL, AUM) | Stock |
+| `net_inflows_usd` | Deposits minus withdrawals | Flow |
+| `supplied_assets_usd` | USD supplied to a lending market | Stock |
+| `outstanding_borrows_usd` | USD currently borrowed | Stock |
+| `stablecoin_supply_usd` | Outstanding stablecoin supply | Stock |
+| `stablecoin_mint_volume_usd` | Stablecoins minted | Flow |
+| `stablecoin_redemption_volume_usd` | Stablecoins redeemed | Flow |
+| `yield_earned_usd` | Yield earned by your users | Flow |
+
+**Flow** is activity during the day. **Stock** is the value at the end of the day. **Interval unique** counts each user once per day.
+
+Revenue, fees, APY, token price, and market cap aren't growth metrics. 01Resolved tracks them separately, so leave them out. If none of the catalog fits a metric you care about, pick the closest one and explain the difference in the sheet's Notes column.
+
+---
+
+## Endpoint format
+
+A `GET` request to your URL returns this JSON. We fetch it every hour.
+
+```json
+{
+  "schema_version": "1.1",
+  "project_id": "your-project",
+  "generated_at": "2026-10-15T01:05:00Z",
+  "metrics": [
+    {
+      "metric_id": "protocol_volume_usd",
+      "observations": [
+        { "date": "2026-10-13", "value": 30528.98, "methodology_version": "1.0" },
+        { "date": "2026-10-14", "value": 29014.92, "methodology_version": "1.0" }
+      ]
+    }
+  ]
+}
+```
+
+- **`project_id`** is your [project slug](/guides/project-slugs).
+- **One value per metric per completed UTC day.** Don't include today. Each day should be in the feed by 06:00 UTC the next day.
+- **Backfill your history.** Each metric needs one value per day from its earliest reliable date up to yesterday, not just from the day you go live. Keep that history in the feed.
+- **`0` means zero.** If you don't have data for a day, leave the day out.
+- **`methodology_version`** starts at `"1.0"`. Raise it if you change how a metric is calculated.
+
+Your endpoint must validate against the 01Resolved Growth Metrics Schema v1.1:
+
+<Accordion title="JSON schema (v1.1)">
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://01resolved.com/schemas/growth-metrics/v1.1.json",
+  "title": "01Resolved Growth Metrics v1.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_id",
+    "generated_at",
+    "metrics"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.1"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/metric"
+      }
+    }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "observations"
+      ],
+      "properties": {
+        "metric_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$",
+          "description": "Canonical metric ID from the current 01Resolved Growth Metric Catalog. This schema validates metric ID syntax; catalog membership is handled separately by 01Resolved ingestion."
+        },
+        "observations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/observation"
+          }
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "date",
+        "value",
+        "methodology_version"
+      ],
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "value": {
+          "type": "number"
+        },
+        "methodology_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        }
+      }
+    }
+  }
+}
+```
+</Accordion>
+
+Once you're live, check what 01Resolved shows with [`/v1/growth-feed`](/api-reference/project/overview).
