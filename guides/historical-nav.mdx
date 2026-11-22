@@ -1,0 +1,76 @@
+---
+title: "Historical NAV"
+description: "Read saved NAV snapshots, identify reconstruction and restatements, and distinguish history from chart references and projections."
+icon: "clock-rotate-left"
+---
+
+Historical NAV is a series of published snapshots. Each snapshot records its treasury value, adjusted supply, NAV/AS, price inputs, methodology and supporting components. A chart point is not a new calculation using today's wallet balances.
+
+Read the [NAV methodology](/guides/nav-methodology) for the inclusion and valuation rules. Compare histories only after checking wallet scope, fee policy, price conventions and timestamps: matching the label "NAV" does not establish that two series use the same assumptions.
+
+## Observed and reconstructed snapshots
+
+| Origin | Meaning |
+| --- | --- |
+| `observed` | Published from recorded observations used by the NAV publisher. The target cadence is hourly; `snapshotAt` retains the actual snapshot time. |
+| `reconstructed` | Historical inputs have been assembled and published through a backfill or correction process. This is not an observation collected live at that historical time. |
+
+Reconstruction must follow the account ownership periods and supply treatment applicable at each cutoff. Historical balances, mints, burns, LP positions, locked tokens and proposal states need contemporaneous evidence. Do not replace an earlier treasury with today's account list, value an earlier balance at today's price, or use a later observation to fill an earlier hour.
+
+Approved historical datasets can retain disclosed price conventions or pending-fee treatments that differ from the current API default. The current CSV importer excludes unclaimed LP fees when calculating NAV. A source CSV's headline value is therefore not proof that the API publishes the same fee scope or the same result. Keep the source values, import treatment and published readback distinguishable.
+
+The accepted CSV reconstruction also distinguishes modeled LP allocations from measured pool ownership. Outside proposals, its constant-product model uses `quote = sqrt(K × price)` and `base = sqrt(K / price)`, with audited parameters and lifecycle changes; concentrated positions use their audited ranges. During live proposals the clean, spot-weighted reserve treatment takes precedence. These modeled amounts are not the denominator for an ownership percentage, and should not be described as identical to an observed reserve-based series.
+
+## Missing and degraded data
+
+The NAV/AS history endpoint selects published snapshots that are not flagged as spike suspects. Missing hours are absent; it does not manufacture zero values, interpolate balances or carry a value through a gap. A drawn line between observations does not establish coverage of the intervening hours.
+
+Publication is not a guarantee of complete inputs. A snapshot can be degraded, for example when an asset price is missing or stale. Other missing inputs can block publication entirely. The hourly history response includes `qualityFlags`; the detailed treasury breakdown includes `dataQualityStatus`, `qualityFlags`, `methodologyVersion` and `methodologyCode`. Do not treat an unpriced asset's zero contribution as a measured zero market value.
+
+<Warning>
+  `/v1/dao/treasury/chart` is an older treasury display endpoint. Its implementation can use legacy history, fill missing hours and smooth short dips. It is not an interchangeable source for an unsmoothed NAV/AS audit. Use `/v1/dao/treasury/nav-as-chart` with an explicit hourly date window for saved observations and provenance.
+</Warning>
+
+## Chart ranges and exact hourly windows
+
+`/v1/dao/treasury/nav-as-chart` has two response modes. See the [API reference](/api-reference/project/financials#get-v1daotreasurynav-as-chart) for parameters and fields.
+
+**Range mode** selects the latest published snapshot in each interval, rather than averaging its financial values:
+
+| Range | Resolution |
+| --- | --- |
+| `1D`, `1W` | Hourly |
+| `1M` | 4 hours |
+| `3M` | 12 hours |
+| `ALL` | 12 hours for up to 730 days; daily through 2,920 days; weekly beyond that |
+
+Ordinary range points are stamped at the start of their interval. All-time premium/discount extremes can add points at the source snapshot's actual time in closed intervals. Consequently the number of plotted points can exceed one per interval, and the all-time high/low summary can describe a point outside a shorter selected range.
+
+**Hourly window mode** is selected by sending `startDate` or `endDate`. It returns the latest published, non-spike snapshot in each UTC hour in `[startDate, endDate)`, with a maximum of 92 days per request. `timestamp` is the hour boundary; `snapshotAt` is the actual source snapshot time. Follow `previousWindow` to page backward, subject to your account and API plan's history limits.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/nav-as-chart?slug=solomon&startDate=2026-10-01T00:00:00Z&endDate=2026-10-08T00:00:00Z"
+```
+
+To investigate a window point, pass its **`snapshotAt`**, rather than its bucket timestamp, to `nav-as-breakdown` and `treasury/breakdown`. Both select the latest eligible snapshot at or before the supplied time. Check the returned `snapshotAt`: there may be no snapshot exactly at the requested time. Fetches made before and after a restatement can also resolve to different published records.
+
+## Restatements and corrections
+
+A restatement publishes a corrected record and retains the superseded record and reason in the underlying audit trail. Public history reads the replacement published record. In hourly window responses, `restated: true` means the snapshot has a supersession link or a restatement reason; it does not mean every earlier hour was corrected.
+
+A prepared reconstruction is not yet published history. A correction requires validated source inputs, applicable ownership and supply periods, component reconciliation, publication and readback of the affected range. Check for duplicate hours and verify unchanged out-of-scope values. Neither a merged code change nor an automatic-rebuild proposal proves that a project's historical gap has been filled.
+
+## ICO references and projections
+
+The optional **`launchReference`** is a fundraising-price reference for an eligible completed USDC launch. It is not a persisted NAV snapshot or an observed first trade. `referenceAt` is the recorded raise close; its plotting `timestamp` is offset before the relevant chart interval. Its standard launch supply assumption is not a reconstructed historical adjusted-supply measurement.
+
+**`projected`** points are a separate allowance illustration. The current calculation holds adjusted supply fixed and subtracts one monthly allowance per point for three months, dated on the 15th of each following month. It does not model actual withdrawal dates, future revenue, asset prices, unlocks or proposal outcomes. Do not append these points to observed history or treat them as a forecast of treasury balances.
+
+## Comparing two histories
+
+1. Match the project, token units, wallet scope, supply exclusions and fee policy.
+2. Match cutoff times before comparing values. A bucket timestamp is not necessarily the observation time, and a daily reconstruction is not proof of hourly coverage.
+3. Reconcile the treasury numerator and supply denominator separately. A small NAV/AS difference can conceal offsetting asset and supply differences.
+4. Keep original recorded prices distinct from later price reconstructions, and disclose USD versus USDC conversion assumptions.
+5. Check origin, quality flags and restatement status. Missing data remains missing until supported evidence is published.

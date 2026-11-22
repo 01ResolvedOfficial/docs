@@ -1,0 +1,98 @@
+---
+title: "NAV Methodology"
+description: "What NAV includes, how adjusted supply is calculated, and how liquidity and live proposals are valued."
+icon: "calculator"
+---
+
+**NAV** is the USD value of the assets included in a project's tracked treasury. **NAV/AS** divides that value by adjusted token supply. The project's own token is excluded from the asset value; eligible treasury-held tokens instead reduce the supply denominator.
+
+```text
+NAV = included treasury asset value
+    + DAO-owned LP non-native asset value
+    + eligible separately recognized assets
+
+Adjusted supply = total token supply
+                - configured treasury-held token exclusions
+                - eligible locked-token exclusions
+                - DAO-owned LP base-token exclusions
+
+NAV/AS = NAV / adjusted supply
+```
+
+Each asset and supply exclusion counts once. Adjusted supply is also called **effective supply**. It is not interchangeable with total supply or circulating supply.
+
+<Note>
+  NAV/AS is an analytical measure of tracked assets per adjusted token. It does not establish a redemption right, legal ownership, or the amount a holder would receive in a liquidation.
+</Note>
+
+## Treasury scope follows dated account records
+
+An account contributes according to its NAV account period and the supply configuration applicable at the snapshot time. This can include the initial DAO treasury, verified secondary treasuries, buyback wallets, DAO-owned liquidity, performance packages and eligible investor-vesting accounts. Being listed in the account registry does not by itself make every asset in an account a NAV input.
+
+Use the full address to identify an account. A name, Entity label, signing arrangement or transaction counterparty alone does not establish ownership. Ownership, who controls an account, and how its assets are held answer different questions.
+
+When a treasury is replaced, historical NAV must retain the earlier account for its applicable period. Applying today's wallet list to every past hour can omit assets or count them twice. External operating-company accounts are outside the treasury scope unless an eligible DAO-owned asset or claim has been separately established and configured.
+
+## Assets and prices
+
+- Included stablecoin balances contribute their value under the snapshot's stablecoin policy. The current default uses $1 for recognized stablecoin mints; a familiar symbol alone is insufficient. Other configured policies can use market prices or a depeg override.
+- Included SOL and other non-native assets use the applicable price source. A separate display of SOL or a pool's total reserves is not an additional asset to add to NAV.
+- Current snapshots use recorded price observations available at or before their timestamp. A current price must not be applied retroactively to a historical balance.
+- Offchain values require explicit opt-in and a valid, timestamped reported value. In the current implementation they add to NAV but do not change adjusted supply or the liquid/LP runway buckets. They are reported values, not onchain observations.
+
+The [treasury breakdown](/api-reference/project/financials#get-v1daotreasurybreakdown) exposes the snapshot's methodology version and quality flags. An unpriced holding is not evidence that the asset is economically worthless: the current publisher can assign it zero contribution and mark the snapshot degraded. Missing or stale balance inputs needed for NAV can prevent publication. Check quality before interpreting the result.
+
+## DAO-owned liquidity
+
+Only the project's supported beneficial position is included. A pool address is not proof that the DAO owns the whole pool. Meteora positions are valued from DAO-owned positions; Raydium ownership requires an LP-mint ownership proof. Other liquidity venues use their supported position/account treatment.
+
+The DAO-owned non-native side enters NAV. The corresponding DAO-owned base tokens reduce adjusted supply when eligible. External LP positions do not become a DAO asset or a supply exclusion.
+
+For concentrated liquidity, ownership can differ by asset and price range. Do not use one global LP percentage where ownership is bin-specific, or divide a modeled allocation by an unrelated pool total. Total-pool quantities in a breakdown are context; `daoOwnedAmount` and `daoOwnedValue` identify the project's allocation.
+
+## Live FutarchyAMM proposals
+
+The current default methodology, version 3, values supported live v0.6/v0.7 proposal exposure using **clean pass and fail spot reserves**, excluding protocol fees. This applies throughout the live proposal, including the first 24 hours.
+
+```text
+pass_price = pass_quote / pass_base
+fail_price = fail_quote / fail_base
+p_pass = pass_price / (pass_price + fail_price)
+p_fail = 1 - p_pass
+
+DAO quote allocation = DAO share × (spot_quote + p_pass × pass_quote + p_fail × fail_quote)
+DAO base exclusion = DAO share × (spot_base + p_pass × pass_base + p_fail × fail_base)
+```
+
+Quantities must be normalized to token units before calculating prices and weights. The quote allocation is valued in USD under the applicable quote-token policy. Valid reserves and a positive sum of prices are required; an invented 50/50 split is not a substitute for missing evidence.
+
+<Note>
+  The proposal's governance outcome uses its configured TWAP rules. NAV exposure weighting uses spot prices under version 3. These are separate calculations: there is no NAV switch to TWAP at hour 24. Older saved methodology versions may retain their original treatment.
+</Note>
+
+Once a proposal settles, count the recomposed winning assets in their resulting custody. Do not also retain the settled conditional claims as treasury assets. Conditional collateral belonging to external depositors does not become DAO-owned liquidity.
+
+## Pending fees and claims
+
+The **current API default is claim basis**: pending or unclaimed LP fees are disclosure-only. They neither add to NAV nor reduce adjusted supply. A claim can bring the received assets into the included treasury balances. Fees belonging to MetaDAO or another external beneficiary are not the launched project's assets.
+
+Some approved historical reconstruction series have a different, explicitly documented scope: separately proven DAO-owned pending fees may be recognized before claim, including eligible base-token exclusions. That treatment must not be assumed for the current API default. A claim moves an already recognized asset into custody; it must never count the same asset twice. See [Historical NAV](/guides/historical-nav) when comparing series.
+
+## Transfers, OTC sales and supply
+
+An internal transfer between two included treasury accounts does not itself change combined assets or adjusted supply. An actual mint or burn changes total supply; a transfer is not a burn. Locked or performance allocations require the applicable configuration and custody evidence, rather than a deduction based only on their name or an assumed unlock date.
+
+An OTC sale can change the numerator and denominator at different times. When base tokens leave included sale custody, their supply exclusion falls. Payment enters NAV when it is received in included custody, unless a separate eligible receivable is explicitly recognized. If delivery and payment occur at different times, NAV/AS can move during settlement. Do not silently smooth that gap or book payment early. Any historical settlement adjustment needs its own evidence and approved treatment.
+
+## Reading the published result
+
+Use values from the same snapshot:
+
+| Question | Endpoint |
+| --- | --- |
+| What is the current headline NAV? | `/v1/dao/treasury/overview?slug=` |
+| Which assets, exclusions and supply produce NAV/AS? | `/v1/dao/treasury/nav-as-breakdown?slug=` |
+| Which methodology and quality flags apply? | `/v1/dao/treasury/breakdown?slug=` |
+| How did NAV/AS change over time? | `/v1/dao/treasury/nav-as-chart?slug=` |
+
+NAV/AS uses `navPerAdjustedSupplyUsd` in current breakdown and overview responses. Older `navPerAdjustedShareUsd` / `navPerAdjustedShare` fields are deprecated aliases. [Historical NAV](/guides/historical-nav) explains timestamps, reconstruction, restatements and chart resolution.

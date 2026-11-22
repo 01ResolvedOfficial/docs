@@ -47,7 +47,9 @@
           {
             "group": "Core Concepts",
             "pages": [
-              "essentials/core-concepts"
+              "essentials/core-concepts",
+              "guides/nav-methodology",
+              "guides/historical-nav"
             ]
           }
         ]

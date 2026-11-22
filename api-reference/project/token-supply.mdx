@@ -6,6 +6,12 @@ icon: "coins"
 
 These endpoints match the **Token Supply** section of a project's Financials tab. All endpoints accept a `slug` query parameter to identify the project. See [Project Slugs](/guides/project-slugs) for valid values.
 
+The mint/burn ledger measures total supply, not the adjusted supply used by NAV/AS. Adjusted supply also subtracts configured treasury, DAO-owned LP and eligible locked-token balances. A transfer out of excluded custody can increase adjusted supply without minting a token. Use `/v1/dao/treasury/nav-as-breakdown` for those exclusions and see [NAV Methodology](/guides/nav-methodology).
+
+<Note>
+  Minted supply less burns is total supply, not the adjusted supply used for NAV/AS. Adjusted supply also subtracts the configured treasury, DAO-owned LP and eligible locked-token exclusions. Use [Treasury & NAV](/api-reference/project/financials#get-v1daotreasurynav-as-breakdown) to inspect those exclusions and [NAV Methodology](/guides/nav-methodology) for their treatment.
+</Note>
+
 ---
 
 ## GET /v1/dao/token-supply/overview

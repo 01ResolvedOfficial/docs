@@ -6,6 +6,8 @@ icon: "vault"
 
 All endpoints accept a `slug` query parameter to identify the project. See [Project Slugs](/guides/project-slugs) for valid values.
 
+See [NAV Methodology](/guides/nav-methodology) for ownership scope, adjusted supply, LP fees and live proposal pricing. See [Historical NAV](/guides/historical-nav) for snapshot timing, quality flags and restatements. Values in examples are illustrative; coverage and history access depend on the project and API plan.
+
 ---
 
 ## GET /v1/dao/treasury/overview
@@ -24,6 +26,8 @@ curl -H "x-api-key: YOUR_KEY" \
 {
   "data": {
     "nav": "5397852.87689693",
+    "navPerAdjustedSupplyUsd": "0.638322292456433533",
+    "premiumDiscountPct": "16.180087616962251081",
     "navPerAdjustedShare": "0.638322292456433533",
     "spotPremiumDiscountToNav": "16.180087616962251081",
     "monthlyAllowance": "100000.00000000",
@@ -55,8 +59,10 @@ curl -H "x-api-key: YOUR_KEY" \
 | Field | Description |
 |-------|-------------|
 | `nav` | NAV in USD: the treasury's non-native value. See `/v1/dao/treasury/nav-as-breakdown` for its components |
-| `navPerAdjustedShare` | NAV per Adjusted Supply (NAV/AS). Formula: `(Treasury Stables + LP Value (non-native side) + Other Non-Native Holdings) ÷ (Total Supply − Protocol-Controlled Tokens − Unvested Allocations)`. If NAV/AS > spot price, the project is trading at a relative discount. If NAV/AS < spot price, it is trading at a relative premium. |
-| `spotPremiumDiscountToNav` | Premium or discount of the spot price to NAV/AS in %. Positive = premium, negative = discount |
+| `navPerAdjustedSupplyUsd` | NAV per adjusted token in USD: `nav ÷ adjusted supply`. See the NAV/AS breakdown for configured supply exclusions |
+| `premiumDiscountPct` | Premium or discount of spot price to NAV/AS, in percent. Positive = premium, negative = discount |
+| `navPerAdjustedShare` | Deprecated alias of `navPerAdjustedSupplyUsd` |
+| `spotPremiumDiscountToNav` | Deprecated alias of `premiumDiscountPct`, also in percent |
 | `monthlyAllowance` | The DAO's monthly spending allowance in USD |
 | `monthsOfRunway.min` | Runway excluding LP value. Formula: `non-native treasury ÷ monthlyAllowance` |
 | `monthsOfRunway.max` | Runway including the non-native side of LP positions. See `/v1/dao/treasury/runway-breakdown` for the inputs |
@@ -109,14 +115,14 @@ curl -H "x-api-key: YOUR_KEY" \
 | `groupedAssets[].token.decimals` | Token decimal places |
 | `spendingLimit` | Monthly spend limit in USD |
 
-<Note>Treasury value includes assets held in DAO wallets **and** LP positions. For runway, use `monthsOfRunway` in `/v1/dao/treasury/overview` or `/v1/dao/treasury/runway-breakdown`.</Note>
+<Note>The asset inventory is not a substitute for the published NAV calculation. Use `nav-as-breakdown` for included assets and supply exclusions, and `runway-breakdown` for the spendable-treasury and LP runway inputs.</Note>
 ---
 
 ## GET /v1/dao/treasury/chart
 
-Returns hourly historical treasury value snapshots.
+Returns a treasury display series. It can combine published NAV snapshots with older treasury history, fill missing hours and smooth short dips. For saved hourly NAV observations with provenance and gaps preserved, use `nav-as-chart` with `startDate` or `endDate`.
 
-**Parameters:** `slug` (required)
+**Parameters:** `slug` (required), `startDate`, `endDate`, `interval` (`day`, `week`, `month`), `entityType`
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
@@ -137,7 +143,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | Field | Description |
 |-------|-------------|
 | `timestamp` | UTC timestamp for this data point |
-| `value` | Treasury USD value at this timestamp |
+| `value` | Treasury display value in USD; may be carried forward or smoothed rather than a separately recorded observation |
 ---
 
 ## GET /v1/dao/treasury/nav-as-breakdown
@@ -147,6 +153,8 @@ Returns everything behind a project's NAV per adjusted share (NAV/AS) from a sin
 **Parameters:** `slug` (required), `timestamp`
 
 Pass `timestamp` (ISO 8601) to get the latest snapshot at or before that time. Omit it for the current snapshot.
+
+ISO dates (UTC midnight), ISO datetimes and Unix seconds are accepted. Check the returned `snapshotAt`; the selected snapshot may be earlier than the request. History limits still apply.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
@@ -159,6 +167,7 @@ curl -H "x-api-key: YOUR_KEY" \
   "data": {
     "snapshotAt": "2026-10-16T05:00:17.407Z",
     "netAssetValueUsd": "5396726.63921106",
+    "navPerAdjustedSupplyUsd": "0.638262459152071838",
     "navPerAdjustedShareUsd": "0.638262459152071838",
     "treasuryWallets": [
       {
@@ -214,7 +223,8 @@ curl -H "x-api-key: YOUR_KEY" \
 |-------|-------------|
 | `snapshotAt` | Time of the snapshot all figures come from |
 | `netAssetValueUsd` | NAV in USD: the combined value of `treasuryWallets` |
-| `navPerAdjustedShareUsd` | NAV/AS. Formula: `netAssetValueUsd ÷ adjustedSupply` |
+| `navPerAdjustedSupplyUsd` | NAV/AS in USD. Formula: `netAssetValueUsd ÷ adjustedSupply` |
+| `navPerAdjustedShareUsd` | Deprecated alias of `navPerAdjustedSupplyUsd` |
 | `treasuryWallets` | Wallets counted in NAV, each with its USD value and token holdings. For LP accounts (`isLpAccount: true`) only the non-native side is counted, shown as `daoOwnedAmount` and `daoOwnedValue` |
 | `excludedFromNav` | Assets held but left out of NAV, mainly the project's own token sitting in LP pools and treasury wallets |
 | `totalSupply.amount` | Total token supply |
@@ -222,8 +232,88 @@ curl -H "x-api-key: YOUR_KEY" \
 | `adjustedSupply` | Supply used for NAV/AS. Formula: `totalSupply.amount − sum of supplyAdjustments` |
 
 <Note>
-  The project's own token never counts toward NAV, even when the treasury holds it. It appears in `excludedFromNav` instead, and the matching token balances are subtracted from supply in `supplyAdjustments`.
+  The project's own token never counts toward the NAV asset value. Eligible configured treasury, LP and locked-token balances reduce supply. An item appearing in `excludedFromNav` does not by itself establish a supply exclusion; inspect `supplyAdjustments`. Pending LP fees are disclosure-only under the current default.
 </Note>
+---
+
+## GET /v1/dao/treasury/breakdown
+
+Returns the included and excluded treasury components together with the snapshot's methodology and data quality. Use this alongside `nav-as-breakdown` to investigate the source of a NAV figure.
+
+**Parameters:** `slug` (required), `timestamp` (optional; latest eligible snapshot at or before this time)
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/breakdown?slug=solomon&timestamp=2026-10-16T05:00:17.407Z"
+```
+
+| Field | Description |
+|-------|-------------|
+| `snapshotAt` | Actual timestamp of the selected published, non-spike snapshot |
+| `netAssetValueUsd` | NAV numerator in USD |
+| `dataQualityStatus` | Whether the saved snapshot is complete or degraded |
+| `qualityFlags` | Saved warnings about inputs; an empty array is not a guarantee of complete historical coverage |
+| `methodologyVersion`, `methodologyCode` | Methodology attached to this snapshot |
+| `treasuryWallets`, `excludedFromNav` | Included and excluded component groups; SOL holdings may appear as a separate aggregate line |
+
+---
+
+## GET /v1/dao/treasury/nav-as-chart
+
+Returns NAV/AS, token price, adjusted supply, treasury value and premium/discount from published, non-spike snapshots. Sending a date boundary selects hourly window mode; otherwise the request uses range mode.
+
+| Parameter | Description |
+|-----------|-------------|
+| `slug` | Required project slug |
+| `range` | `1D`, `1W`, `1M`, `3M` (default), or `ALL`; used when neither date boundary is supplied |
+| `startDate` | Optional UTC ISO date/datetime; inclusive hourly window start |
+| `endDate` | Optional UTC ISO date/datetime; exclusive hourly window end |
+
+Account and API-plan gates apply. On the website, `1D`, `1W` and `1M` are the open ranges; longer ranges and hourly windows require a signed-in account. Pro history is limited to the last 92 days; Builder and higher plans can access the full available history. A date-window request is limited to 92 days regardless of plan. A Pro `ALL` request is narrowed to its allowed hourly window.
+
+### Range mode
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/nav-as-chart?slug=solomon&range=1M"
+```
+
+`1D` and `1W` use hourly buckets, `1M` uses four-hour buckets, and `3M` uses twelve-hour buckets. `ALL` uses twelve-hour buckets for histories up to 730 days, daily buckets up to 2,920 days, then weekly buckets. Each regular point uses its bucket's latest snapshot and is stamped with the bucket start; it is not an average.
+
+The response contains `range`, `resolution`, `today`, `launchStatus`, `historical`, `historicalDpRange`, `decisionMarkets` and `projected`, plus an optional `launchReference`. Historical points contain `timestamp`, `navAs`, `tokenPrice`, `adjustedSupply`, `treasuryValueUsd`, `premiumDiscountPct` and the deprecated percentage alias `discountPremium`.
+
+The all-time premium/discount high and low can be included as additional points at their actual snapshot time, with `extreme: "high"` or `"low"`. An extra extreme in the newest bucket is deferred until that bucket closes. `historicalDpRange` describes the full saved history, not just the selected chart range.
+
+`launchReference` is an ICO price reference, not observed NAV. `projected` contains a separate three-month allowance illustration, not recorded history. See [Historical NAV](/guides/historical-nav#ico-references-and-projections).
+
+### Hourly window mode
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/treasury/nav-as-chart?slug=solomon&startDate=2026-10-01T00:00:00Z&endDate=2026-10-08T00:00:00Z"
+```
+
+The latest eligible snapshot per UTC hour is returned in `[startDate, endDate)`. Missing hours are omitted. If `endDate` is omitted, it defaults to the end of the current UTC hour; if `startDate` is omitted, the default is 92 days before the end, subject to plan limits. The start must precede the end.
+
+| Field | Description |
+|-------|-------------|
+| `resolution` | `hour` |
+| `window.startDate`, `window.endDate` | Effective request boundaries, end exclusive |
+| `firstHour` | Earliest published, non-spike snapshot time for this project, or null; not a claim of continuous coverage |
+| `previousWindow` | Earlier allowed window as `{ startDate, endDate }`, or null when no earlier allowed window remains |
+| `historical[].timestamp` | UTC hour boundary |
+| `historical[].snapshotAt` | Actual source snapshot time; use this for a matching breakdown request |
+| `historical[].navAs` | Published NAV per adjusted token in USD |
+| `historical[].treasuryValueUsd` | Saved NAV numerator in USD |
+| `historical[].adjustedSupply` | Saved denominator in token units |
+| `historical[].tokenPrice` | Saved spot price in USD, or null |
+| `historical[].premiumDiscountPct` | Saved premium/discount in percent, or null |
+| `historical[].origin` | `observed` or `reconstructed` |
+| `historical[].restated` | Whether the selected record has a supersession link or restatement reason |
+| `historical[].qualityFlags` | Saved warnings about inputs |
+
+Unlike range mode, hourly window mode returns no launch reference, projections or decision-market overlays. An empty `historical` array means no eligible records in that window; it does not mean treasury value was zero.
+
 ---
 
 ## GET /v1/dao/treasury/runway-breakdown
@@ -260,7 +350,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | `runwayExcludingLpMonths` | Formula: `nonNativeTreasuryValueUsd ÷ monthlySpendLimitUsd` |
 | `runwayIncludingLpMonths` | Formula: `(nonNativeTreasuryValueUsd + nonNativeLpValueUsd) ÷ monthlySpendLimitUsd` |
 
-The two treasury inputs add up to NAV: `nonNativeTreasuryValueUsd + nonNativeLpValueUsd = netAssetValueUsd` in `/v1/dao/treasury/nav-as-breakdown`.
+The two inputs cover the runway-eligible non-native treasury and LP assets. An explicitly opted-in manual offchain value can increase NAV while remaining outside both runway buckets, so these inputs need not sum to the full NAV numerator. Runway uses the spending allowance, not a forecast of actual spending.
 ---
 
 ## GET /v1/dao/project-timeline

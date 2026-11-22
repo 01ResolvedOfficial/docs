@@ -79,21 +79,25 @@ Economic Direction classifies trades by the outcome they economically support, n
 
 01Resolved calculates two related NAV figures:
 
-**NAV** is the total value of non-native assets held by the protocol treasury.
+**NAV** is the USD value of assets included in the project's tracked treasury, including its verified share of liquidity positions. The project's own token is excluded from this asset value.
 
 ```
-NAV = Treasury Stables + LP Value (non-native side) + Other Non-Native Holdings
+NAV = Included Treasury Assets + DAO-Owned LP Non-Native Value + Eligible Separately Recognized Assets
 ```
 
-**NAV/AS** (NAV per adjusted share) is NAV divided by the adjusted supply. It represents non-native asset backing per economically active token.
+**NAV/AS** (NAV per adjusted supply) is NAV divided by adjusted token supply, also called effective supply. It measures tracked asset value per adjusted token; it does not establish redemption or liquidation rights.
 
 ```
 NAV/AS = NAV / Adjusted Supply
 
-Adjusted Supply = Total Supply - Protocol-Controlled Tokens - Unvested Allocations
+Adjusted Supply = Total Supply - Configured Treasury, LP and Eligible Locked-Token Exclusions
 ```
 
 If NAV/AS is greater than spot price, the project is trading at a relative discount. If NAV/AS is less than spot price, the project is trading at a relative premium.
+
+Ownership scope, pending fees and live proposal exposure require their own treatment. The current default uses claim-basis LP fees and clean pass/fail spot prices for supported live FutarchyAMM proposals, including the first 24 hours. Governance TWAP rules do not set these NAV weights.
+
+See [NAV Methodology](/guides/nav-methodology) for the calculation and [Historical NAV](/guides/historical-nav) for saved observations, missing hours, corrections and chart projections.
 
 ## mNAV
 
