@@ -120,7 +120,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ## GET /v1/dao/treasury/chart
 
-Returns a treasury display series. It can combine published NAV snapshots with older treasury history, fill missing hours and smooth short dips. For saved hourly NAV observations with provenance and gaps preserved, use `nav-as-chart` with `startDate` or `endDate`.
+Returns hourly historical treasury value snapshots.
 
 **Parameters:** `slug` (required), `startDate`, `endDate`, `interval` (`day`, `week`, `month`), `entityType`
 
