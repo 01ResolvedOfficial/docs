@@ -232,7 +232,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | `adjustedSupply` | Supply used for NAV/AS. Formula: `totalSupply.amount − sum of supplyAdjustments` |
 
 <Note>
-  The project's own token never counts toward the NAV asset value. Eligible configured treasury, LP and locked-token balances reduce supply. An item appearing in `excludedFromNav` does not by itself establish a supply exclusion; inspect `supplyAdjustments`. Pending LP fees are disclosure-only under the current default.
+  The project's own token never counts toward NAV, even when the treasury holds it. It appears in `excludedFromNav` instead, and the matching token balances are subtracted from supply in `supplyAdjustments`.
 </Note>
 ---
 
@@ -350,7 +350,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | `runwayExcludingLpMonths` | Formula: `nonNativeTreasuryValueUsd ÷ monthlySpendLimitUsd` |
 | `runwayIncludingLpMonths` | Formula: `(nonNativeTreasuryValueUsd + nonNativeLpValueUsd) ÷ monthlySpendLimitUsd` |
 
-The two inputs cover the runway-eligible non-native treasury and LP assets. An explicitly opted-in manual offchain value can increase NAV while remaining outside both runway buckets, so these inputs need not sum to the full NAV numerator. Runway uses the spending allowance, not a forecast of actual spending.
+The two treasury inputs add up to NAV: `nonNativeTreasuryValueUsd + nonNativeLpValueUsd = netAssetValueUsd` in `/v1/dao/treasury/nav-as-breakdown`.
 ---
 
 ## GET /v1/dao/project-timeline

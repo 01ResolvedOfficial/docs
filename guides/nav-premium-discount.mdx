@@ -17,25 +17,23 @@ Every ownership coin is backed by a treasury. 01Resolved measures that backing p
 | Metric | Meaning | Where to get it |
 |--------|---------|-----------------|
 | **NAV** | Non-native treasury value in USD: stablecoins, the non-native side of LP positions, and other non-native holdings. The project's own token never counts | `netAssetValueUsd` in `/v1/global-dashboard/projects-launch`, `nav` in `/v1/dao/treasury/overview` |
-| **NAV/AS** | NAV ÷ adjusted supply, after configured treasury, DAO-owned LP and eligible locked-token exclusions. It is an analytical ratio, not an entitlement to treasury assets | `navPerAdjustedSupplyUsd` in `projects-launch` and `/v1/dao/treasury/nav-as-breakdown` |
-| **Premium / discount** | How far price sits above or below NAV/AS. In percent: `(price − NAV/AS) ÷ NAV/AS × 100` | `premiumDiscountPct` in `projects-launch` and `/v1/dao/treasury/overview`; `/v1/dao/treasury/premium-discount-breakdown` |
+| **NAV/AS** | NAV ÷ adjusted supply. Adjusted supply removes protocol-controlled and unvested tokens, so NAV/AS is the backing per token that has a live claim | `netAssetValue` in `projects-launch`, `/v1/dao/treasury/nav-as-breakdown` |
+| **Premium / discount** | How far the price sits above (premium) or below (discount) NAV/AS. Formula: `(price − NAV/AS) ÷ NAV/AS` | `premDisc` in `projects-launch`, `/v1/dao/treasury/premium-discount-breakdown` |
 | **mNAV** | Fully diluted valuation ÷ NAV. How many times its treasury the market values the project at | `mNAV` in `projects-launch` |
 | **Runway** | Months the treasury lasts at the monthly spend limit, with and without LP value | `/v1/dao/treasury/runway-breakdown` |
 
 <Note>
-  `premiumDiscountPct` is a **percentage** (`16` = 16% premium). The deprecated `premDisc` in `projects-launch` is a **ratio** (`0.16` = 16% premium); multiply that alias by 100 only. The older `spotPremiumDiscountToNav` overview alias and `discount.pct` in `market-metrics` are also percentages. Do not multiply an already percentage-valued field by 100.
+  Units differ between endpoints. `premDisc` in `projects-launch` is a **ratio** (`0.16` = 16% premium). `spotPremiumDiscountToNav` in `treasury/overview`, `discount.pct` in `market-metrics`, and every value in `premium-discount-breakdown` are **percentages** (`16.1` = 16.1%).
 </Note>
-
-See [NAV Methodology](/guides/nav-methodology) for account scope, proposal valuation and fees, and [Historical NAV](/guides/historical-nav) for saved observations, gaps and corrections.
 
 ---
 
 ## How to read a premium or discount
 
-- **A discount is a comparison with tracked assets, not a guaranteed floor.** Realizable proceeds depend on ownership, restrictions, liabilities, liquidity, governance and costs that NAV may not capture. NAV/AS does not establish a redemption right or liquidation payout.
+- **A discount is a floor signal.** When a token trades below NAV/AS for a sustained period, holders can be better off returning the treasury than running the project, which makes a liquidation proposal rational. That pull toward NAV/AS only works if holders coordinate and trust the NAV figure. See [Wound Down](/guides/project-slugs) for projects that went this way.
 - **A premium is the market paying for what the balance sheet does not show:** product, growth, and expectations. The larger the premium, the more of the price depends on those expectations holding up.
-- **The premium is an arithmetic residual.** `(premiumDiscountPct / 100) × NAV` equals adjusted-supply market value minus NAV when inputs use the same snapshot. It is not an independently measured business value or the difference between fully diluted value and NAV.
-- **Read NAV, NAV/AS, and price together.** NAV can fall because of spending, asset prices, ownership scope or a restatement. NAV/AS falling while NAV holds can indicate increasing adjusted supply, including tokens leaving excluded custody. A changing ratio alone does not identify a transaction. `/v1/dao/treasury/nav-as-chart` returns the saved inputs over time.
+- **The premium prices the operating business.** `premDisc × NAV` gives the value the market assigns beyond the treasury. A 50% premium on a $4M NAV implies the market values the business at about $2M.
+- **Read NAV, NAV/AS, and price together.** NAV falling means the treasury is being spent. NAV/AS falling while NAV holds means supply is growing. Price moving on its own means expectations changed. `/v1/dao/treasury/nav-as-chart` returns all three over time.
 
 ---
 
@@ -71,7 +69,7 @@ for c in coins:
     rows.append({
         "slug": c["organizationSlug"],
         "symbol": c["tokenSymbol"],
-        "prem_disc_pct": float(c["premiumDiscountPct"]),  # already a percentage
+        "prem_disc_pct": float(c["premDisc"]) * 100,  # premDisc is a ratio
         "nav_usd": float(c["netAssetValueUsd"]),
         "runway_months": float(c["monthsOfRunway"]),
     })
@@ -140,10 +138,8 @@ The three discounts read very differently:
 Pull `/v1/dao/treasury/nav-as-chart` with `range=1M` or `range=3M`. Each point has `navAs`, `tokenPrice`, `adjustedSupply`, and `discountPremium`, so you can see which side is moving:
 
 - **Price falling while NAV/AS holds:** the market is marking the project down. The discount widens without any change to the treasury.
-- **NAV/AS falling while price holds:** inspect both treasury value and adjusted supply. Spending, asset repricing, token releases, scope changes and corrections can affect the ratio.
-- **`adjustedSupply` stepping up:** inspect token custody and supply events. An unlock, OTC delivery, mint or change in configured exclusions can increase the denominator. Holding NAV fixed, NAV/AS changes inversely with adjusted supply.
-
-Range requests bucket the observations. Use an explicit hourly date window when you need `snapshotAt`, origin, restatement status and quality flags; see [Historical NAV](/guides/historical-nav).
+- **NAV/AS falling while price holds:** the treasury is being spent or supply is unlocking. A discount can disappear without the price moving.
+- **`adjustedSupply` stepping up:** vested tokens unlocked. NAV/AS drops by the same proportion even though the treasury did not change.
 
 ---
 
@@ -164,7 +160,7 @@ Before treating a discount as an opportunity, confirm the NAV is what it appears
 
 ## Strategy 5: Watch for liquidation and buyback proposals
 
-Poll `/v1/global-dashboard/projects/decision-markets` for live and initiated proposals, open any that propose a liquidation or buyback with `/v1/proposal/{publicKey}`, and follow the market with `/v1/proposal/{publicKey}/pass-edge`. A proposal is not a completed distribution; actual terms and execution determine what happens to assets. Completed liquidations, with their outcome and date, are in `/v1/global-dashboard/graveyard-launches`.
+The floor described above becomes real through decision markets. Poll `/v1/global-dashboard/projects/decision-markets` for live and initiated proposals, open any that propose a liquidation or buyback with `/v1/proposal/{publicKey}`, and follow the market with `/v1/proposal/{publicKey}/pass-edge`. Completed liquidations, with their outcome and date, are in `/v1/global-dashboard/graveyard-launches`.
 
 <Tip>
   Rate limits apply per key. Fetch the market-wide list once from `projects-launch`, then call per-project endpoints only for the coins your screen selects, as in Strategy 2.
