@@ -57,7 +57,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | `fundsAccepted` | Accepted amount in raw quote-token units; divide by `10^tokenDecimals`. Null if not recorded |
 | `secondsForLaunch` | Duration of the ICO raise window in seconds (604800 = 7 days) |
 | `isPermissionLess` | Whether any wallet can contribute without whitelisting |
-| `icoReturn` | Return multiple relative to ICO price since launch |
+| `icoReturn` | Percentage change from ICO price; `100` means a gain of 100% |
 ---
 
 ## GET /v1/global-dashboard/completed-launches/info
