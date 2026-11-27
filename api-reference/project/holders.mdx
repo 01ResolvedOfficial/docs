@@ -69,6 +69,43 @@ Balances are refreshed every 30 minutes. `meta.totalItems` gives the total numbe
 </Note>
 ---
 
+## GET /v1/project-overview/holder-count-history
+
+Returns recorded positive-balance wallet counts for the visible ownership coin's
+current mint, ordered oldest first. Observations begin with successful ranking
+refreshes after history capture is deployed. Earlier history is not reconstructed.
+
+**Parameters:** `slug` (required), `startDate` (inclusive ISO date/time), `endDate`
+(exclusive ISO date/time, defaults to now), `threshold` (optional nonnegative
+integer), `limit` (1–100, default 100), `page` (default 1).
+
+The API key's history window and row limits apply. An omitted start is bounded by
+the plan's permitted lookback; an explicitly older start is refused. A future end
+is clamped to now. Unknown or hidden ownership coins return 404.
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/project-overview/holder-count-history?slug=solomon&threshold=5000&limit=100"
+```
+
+`data` contains `{ "syncedAt": "...", "holderCount": 5000 }` observations.
+Pagination and coverage are in `meta`:
+
+| Field | Meaning |
+|-------|---------|
+| `meta.totalItems` | Number of recorded observations in the requested window |
+| `meta.coverage.firstObservationAt` / `lastObservationAt` | Earliest/latest observation in that window; null when empty |
+| `meta.coverage.firstObservedAtOrAbove` | First observation meeting `threshold` across the entire window, independent of the selected page; null without a threshold or matching observation |
+| `meta.coverage.windowStart` / `windowEnd` | Effective inclusive start and exclusive end |
+| `meta.coverage.baseMint` | Current mint whose ownership rankings were recorded |
+| `meta.coverage.exactCrossingTimeKnown` | Always false: an observed count does not prove when a threshold was crossed |
+
+An empty `data` array means no observations were recorded in that window. It does
+not mean there were zero holders. A recorded count of zero is a genuine completed
+refresh result. Gaps are not filled with inferred counts.
+
+---
+
 ## GET /v1/project-overview/token-distribution
 
 Returns token allocation breakdown by category.

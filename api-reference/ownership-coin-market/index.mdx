@@ -136,11 +136,11 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns matching projects and proposals from a global search query.
 
-**Parameters:** `search` (required)
+**Parameters:** `search` or `q` (optional), `type`, `limit`, `page`.
 
-<Warning>
-  The parameter is `search=`. Using `q=`, `query=`, or `term=` returns a 400 error.
-</Warning>
+`q` is an alias for `search`. If both are supplied, `search` takes precedence.
+`query` and `term` are not supported aliases. Omitting a supported search term
+returns the unfiltered catalog.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
@@ -178,3 +178,34 @@ curl -H "x-api-key: YOUR_KEY" \
 | `data.proposals` | Matching proposals across all projects |
 | `projects[].slug` | Use with [Project](/api-reference/project/overview) endpoints for detailed data |
 | `proposals[].publicKey` | Use with [Project > Decision Markets](/api-reference/project/proposals) endpoints for market data |
+
+
+## GET /v1/global-dashboard/overview/participants
+
+Returns distinct indexed holder and contributor wallet counts across the current
+visible ownership coin projects, excluding liquidated projects. A wallet shared
+by several scoped projects is counted once in each measure. These are wallet
+addresses, not people; contribution records do not establish accepted allocations.
+No wallet addresses are returned.
+
+**Parameters:** none
+
+```bash
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/global-dashboard/overview/participants"
+```
+
+| Field under `data` | Meaning |
+|--------------------|---------|
+| `uniqueHolderWallets` | Decimal string count of distinct positive-balance owners in current stored rankings; null if every expected ranking is unavailable |
+| `uniqueContributorWallets` | Decimal string count of distinct positive contributors to visible completed launches with accepted funds; null if all expected funding records are unavailable |
+| `scope.projects` / `scope.mints` | Exact project slugs and current token mints used |
+| `coverage.holders.missingMints` | Scoped mints lacking stored rankings or a genuine zero-count observation |
+| `coverage.holders.oldestSyncedAt` / `newestSyncedAt` | Range of stored holder refresh times |
+| `coverage.contributors.launchesWithoutFundingRecords` | Scoped funded launches lacking indexed positive contributions |
+| `coverage.*.status` | Source availability, such as `indexed`, `partial`, or `unavailable`; holder scope can also be `empty_scope` |
+| `coverage.*.completeness` | `not_verified`: availability does not establish complete historical indexing |
+
+Partial indexed counts can be lower bounds. Holder refreshes are not simultaneous.
+Zero in an empty scope is distinct from missing expected records. `generatedAt`
+is response generation time, not a claim that source records were just refreshed.

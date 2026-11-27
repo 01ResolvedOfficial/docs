@@ -10,9 +10,17 @@ These endpoints match the **Revenues** and **Expenses** sections of a project's 
 
 ## GET /v1/dao/revenues
 
-Returns monthly revenue broken down by source.
+Returns revenue broken down by source and period. The default interval is `month`, and the default date range is the past year.
 
-**Parameters:** `slug` (required)
+**Parameters:** `slug` (required), `entityType` (optional), `interval` (`day`, `week`, `month`, `quarter`, or `year`), `startDate`, `endDate`.
+
+`/total-revenue` covers all available history. To reconcile a series to that total, pass an explicit `startDate` before the first revenue observation and an `endDate` covering all recorded revenue, with the same `entityType`. Summing the default past-year series does not produce the all-history total.
+
+```bash
+# Full-history comparison; choose dates that cover the project's recorded history.
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.01resolved.com/v1/dao/revenues?slug=metadao&interval=month&startDate=2020-01-01&endDate=2026-11-28"
+```
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
@@ -38,7 +46,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 | Field | Description |
 |-------|-------------|
-| `period` | Start of this month |
+| `period` | Start of the requested aggregation period |
 | `revenue` | Total USD revenue for this period |
 | `details[].source` | Revenue source label (e.g. `Protocol fees`) |
 | `details[].revenue` | USD revenue from this source |
@@ -97,7 +105,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 | Field | Description |
 |-------|-------------|
-| `period` | Start of this month |
+| `period` | Start of the requested aggregation period |
 | `expense` | Total USD expenses for this period |
 | `details[].source` | Expense category label |
 | `details[].expense` | USD amount for this category |

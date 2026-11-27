@@ -39,7 +39,8 @@ def get(path):
 def all_pages(path):
     items, page = [], 1
     while True:
-        body = get(f"{path}?limit=50&page={page}")
+        separator = "&" if "?" in path else "?"
+        body = get(f"{path}{separator}limit=50&page={page}")
         batch = body.get("data") or []
         items += batch
         if not batch or page >= (body.get("meta") or {}).get("totalPages", 1):
@@ -54,7 +55,7 @@ def table(header, rows):
     return "\n".join(lines)
 
 
-def render(coins, orgs, graveyard):
+def render(coins, orgs, graveyard, raises=()):
     coin_slugs = {c["organizationSlug"] for c in coins}
     dead_slugs = {g["organizationSlug"] for g in graveyard}
     others = [o for o in orgs if o["organizationSlug"] not in coin_slugs | dead_slugs]
@@ -72,6 +73,12 @@ def render(coins, orgs, graveyard):
         [g["title"], f'`{g["organizationSlug"]}`', g.get("tokenSymbol") or "—",
          (g.get("reasonStatus") or "").capitalize(), (g.get("dateEnded") or "")[:10]]
         for g in sorted(graveyard, key=lambda g: g.get("dateEnded") or "", reverse=True)
+    ]
+
+    raise_rows = [
+        [r.get("title") or r["organizationSlug"], f'`{r["organizationSlug"]}`', r["state"]]
+        for r in sorted(raises, key=lambda r: by_name(r.get("title") or r["organizationSlug"]))
+        if r.get("state") in {"Live", "Initialized"}
     ]
 
     return f"""---
@@ -93,6 +100,14 @@ Use these values in the `slug` query parameter, or the `{{slug}}` path parameter
 Projects that launched an ownership coin through MetaDAO, Futardio, or Backable. Full coverage: overview, financials, and decision markets.
 
 {table(["Project", "Slug", "Token"], coin_rows)}
+
+---
+
+## Live and Upcoming Raises
+
+Launches in `Live` or `Initialized` state. A listing here does not imply a completed ownership coin or full financial coverage. Start times may not yet be scheduled. Read `/v1/global-dashboard/recent-launches?state=Live,Initialized` for current timing and state.
+
+{table(["Project", "Slug", "State"], raise_rows)}
 
 ---
 
@@ -141,7 +156,9 @@ def main():
     if not coins or not orgs:
         sys.exit("API returned an empty project list; refusing to overwrite the page")
 
-    new = render(coins, orgs, graveyard)
+    time.sleep(2.2)
+    raises = all_pages("/global-dashboard/recent-launches?state=Live,Initialized")
+    new = render(coins, orgs, graveyard, raises)
     old = PAGE.read_text() if PAGE.exists() else ""
     if new == old:
         print("project-slugs.mdx unchanged")

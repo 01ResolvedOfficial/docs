@@ -43,7 +43,9 @@ curl -H "x-api-key: YOUR_KEY" \
 
 ## GET /v1/project-overview/ico-contributor
 
-Returns aggregate ICO contributor statistics.
+Returns aggregate ICO contributor statistics. Contributor aggregates span all
+launch versions of the project; the raise configuration comes from its latest
+launch. They can differ from the investor count of one completed launch.
 
 **Parameters:** `slug` (required)
 
@@ -78,6 +80,21 @@ curl -H "x-api-key: YOUR_KEY" \
 | `medianContribution` | Median contribution per wallet in USDC |
 | `minimumRaiseAmount` | Minimum raise threshold in USDC |
 | `fundsAccepted` | Total funds accepted (may be less than committed if oversubscribed) |
+
+The additive `contributionCoverage` object distinguishes absent records from
+observed zero. Prefer it when checking data availability:
+
+| Field | Meaning |
+|-------|---------|
+| `scope` | `project_all_launches` |
+| `status` | `unavailable` when a positive committed/accepted raise has no indexed transactions; `partial` when amounts are missing; otherwise `indexed` or `no_recorded_contributions` |
+| `contributorCount` / `transactionCount` | Indexed counts, or null when the funded raise's records are unavailable |
+| `contributedQuote` | Exact decimal string in quote-token units, or null when records/amounts are unavailable |
+| `completeness` | `not_verified`: indexed records are not proof that every historical contribution was captured |
+
+Legacy fields retain their existing zero fallbacks for compatibility. A legacy
+zero alone does not prove a funded raise had no investors. Median contribution preserves quote-token precision even for large amounts.
+
 ---
 
 ## GET /v1/project-overview/ico-contributor/chart
