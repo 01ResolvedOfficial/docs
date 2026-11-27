@@ -136,11 +136,10 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns matching projects and proposals from a global search query.
 
-**Parameters:** `search` (required)
+**Parameters:** `search` or `q` (at least one required).
 
-<Warning>
-  The parameter is `search=`. Using `q=`, `query=`, or `term=` returns a 400 error.
-</Warning>
+`q` is an alias for `search`. If both are supplied, `search` takes precedence.
+`query` and `term` are not supported aliases.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
