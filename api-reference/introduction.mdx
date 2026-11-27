@@ -21,6 +21,18 @@ curl -H "x-api-key: YOUR_API_KEY" \
   "https://api.01resolved.com/v1/dao/treasury/overview?slug=metadao"
 ```
 
+## OpenAPI schema
+
+`GET /v1/openapi.json` returns raw OpenAPI JSON for the public GET endpoints,
+using the same `x-api-key` authentication and endpoint access policy as other API
+requests. It is not wrapped in a `data` envelope. Staff and account operations
+are excluded. The existing interactive documentation retains its separate login.
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://api.01resolved.com/v1/openapi.json"
+```
+
 ## Endpoint Groups
 
 <CardGroup cols={2}>
