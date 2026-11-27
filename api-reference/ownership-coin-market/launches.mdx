@@ -56,7 +56,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | `committedAmount` | Total USDC committed by contributors. Divide by `10^6` |
 | `fundsAccepted` | Accepted amount in raw quote-token units; divide by `10^tokenDecimals`. Null if not recorded |
 | `secondsForLaunch` | Duration of the ICO raise window in seconds (604800 = 7 days) |
-| `isPermissionLess` | Whether any wallet can contribute without whitelisting |
+| `isPermissionLess` | Launch review classification: `true` identifies a launch marked unvetted by MetaDAO |
 | `icoReturn` | Percentage change from ICO price; `100` means a gain of 100% |
 ---
 
@@ -165,3 +165,5 @@ For USDC, raw units have six decimals. Read the quote token's decimals instead o
 `icoInvestors` counts a particular launch address. The ICO contributor summary counts distinct wallets across all launch versions for the project slug, so these counts can differ. A missing historical funding index cannot establish that a sale had no investors.
 
 A zero `unixTimestampStarted` means no start time is recorded; it is not a January 1970 launch date. For an `Initialized` launch this can mean a start has not been scheduled.
+
+`isPermissionLess` comes from the launch source classification. For the MetaDAO organization source, curated launches are marked `false` and other launches `true`; accelerated launches use their source flag when supplied. Launches from the same month can have different classifications.

@@ -87,7 +87,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns a paginated list of all decision markets (proposals) across all projects, most recent first.
 
-**Parameters:** `limit`, `page`
+**Parameters:** `limit`, `page`, `search`, `status` (`initiated`, `lived`, `resolved`), `result` (`approved`, `rejected`), `sortBy` (`startDate`, `endDate`), `orderBy` (`ASC`, `DESC`).
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
@@ -129,9 +129,11 @@ curl -H "x-api-key: YOUR_KEY" \
 |-------|-------------|
 | `projectSlug` | The project's slug. Use with [Project > Decision Markets](/api-reference/project/proposals) endpoints for deeper data |
 | `publicKey` | The proposal's onchain public key |
-| `status` | Current state: `live` or `resolved` |
-| `result` | Outcome for resolved proposals: `approved` or `rejected`. Empty string if still live |
+| `status` | Indexed lifecycle state: `initiated`, `live`, or `resolved` |
+| `result` | Outcome for resolved proposals: `approved` or `rejected`. Empty string while unresolved |
 ---
+
+An `initiated` proposal has not moved to the live market state in the index. A recorded `endDate` can pass while that status remains unchanged; the clock alone does not establish activation or an outcome. Use the indexed lifecycle state when selecting live or resolved markets. The query filter for live markets is spelled `status=lived`, while those rows return `status: "live"`.
 
 ## GET /v1/global-dashboard/projects/decision-markets
 
@@ -172,7 +174,7 @@ curl -H "x-api-key: YOUR_KEY" \
 
 | Field | Description |
 |-------|-------------|
-| `status` | Only returns `live` proposals |
+| `status` | Returns `initiated` and `live` proposals |
 | `stakingProgressPercentage` | How far along the staking requirement has been met (%) |
 | `thresholdPercentage` | Current TWAP spread relative to the pass threshold |
 | `proposalTwapStatus` | Current TWAP signal: `approve` or `reject` |
