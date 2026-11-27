@@ -10,9 +10,9 @@ These endpoints match the **Ownership Coin ICOs** and **Ownership Coins by Fundi
 
 ## GET /v1/global-dashboard/recent-launches
 
-Returns all ICOs currently live or recently launched, with full raise and token details.
+Returns launch records with raise and token details. By default, states are `Initialized`, `Live`, `Finished`, and `Refunding`; completed launches are omitted. Use `state=Complete` to include completed launches such as Umbra, or send comma-separated states.
 
-**Parameters:** `limit`, `page`
+**Parameters:** `limit`, `page`, `search`, `state`
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
@@ -54,7 +54,7 @@ curl -H "x-api-key: YOUR_KEY" \
 | `state` | Launch state: `Live`, `Complete`, etc. |
 | `minimumRaiseAmount` | Minimum raise target in raw USDC units. Divide by `10^6` for USDC value |
 | `committedAmount` | Total USDC committed by contributors. Divide by `10^6` |
-| `fundsAccepted` | Total USDC accepted (null if raise not yet closed) |
+| `fundsAccepted` | Accepted amount in raw quote-token units; divide by `10^tokenDecimals`. Null if not recorded |
 | `secondsForLaunch` | Duration of the ICO raise window in seconds (604800 = 7 days) |
 | `isPermissionLess` | Whether any wallet can contribute without whitelisting |
 | `icoReturn` | Return multiple relative to ICO price since launch |
@@ -99,6 +99,8 @@ curl -H "x-api-key: YOUR_KEY" \
 | `holdersCount` | Number of wallets currently holding this token |
 | `fundsAccepted` | Final USDC accepted at close of ICO. Divide by `10^6` |
 | `isFeatured` | Whether this project is featured on the 01Resolved platform |
+| `fundRaised` | Total committed amount in quote-token units, including oversubscription. This is not accepted funds |
+| `icoInvestors` | Distinct indexed funders of this launch address; null when no funding records were indexed |
 ---
 
 ## GET /v1/global-dashboard/graveyard-launches
@@ -141,7 +143,25 @@ curl -H "x-api-key: YOUR_KEY" \
 | Field | Description |
 |-------|-------------|
 | `reasonStatus` | Why the project ended (e.g. `liquidated`) |
-| `dateEnded` | Date the project was wound down |
-| `fundRaised` | Total USDC raised during the ICO (human-readable) |
+| `dateEnded` | Date the project was wound down; this is not the ICO close date |
+| `unixTimestampClosed` | Recorded ICO close time, or start plus duration when no close time is recorded (Unix seconds) |
+| `fundRaised` | Total committed amount in quote-token units, including oversubscription |
 | `targetRaise` | The project's stated raise target in USDC |
 | `icoInvestors` | Number of wallets that participated in the ICO |
+
+
+## Amount units and investor scope
+
+Legacy fields use different units across launch endpoints:
+
+| Field | Recent and completed launches | Graveyard launches |
+|-------|-------------------------------|--------------------|
+| `minimumRaiseAmount`, `committedAmount` | Raw quote-token units | Raw quote-token units |
+| `fundsAccepted` | Raw quote-token units | Quote-token units, already scaled |
+| `fundRaised`, `targetRaise` | Completed: quote-token units, already scaled | Quote-token units, already scaled |
+
+For USDC, raw units have six decimals. Read the quote token's decimals instead of assuming every token has six. Commitments can exceed the final accepted raise; do not use `fundRaised` as accepted proceeds.
+
+`icoInvestors` counts a particular launch address. The ICO contributor summary counts distinct wallets across all launch versions for the project slug, so these counts can differ. A missing historical funding index cannot establish that a sale had no investors.
+
+A zero `unixTimestampStarted` means no start time is recorded; it is not a January 1970 launch date. For an `Initialized` launch this can mean a start has not been scheduled.

@@ -11,7 +11,7 @@ All endpoints accept a `slug` query parameter to identify the project. See [Proj
 
 ## GET /v1/url/\{project\}
 
-Returns the canonical URL for a project's page on 01Resolved.
+Returns saved external analytics links for a project: its own dashboard (`inhouseUrl`), Dune (`duneUrl`), DeFi dashboard (`defiUrl`), and another link (`otherUrl`). This is not a canonical 01Resolved page URL resolver.
 
 **Parameters:** `project` (path, required) — the project slug
 
@@ -29,7 +29,7 @@ curl -H "x-api-key: YOUR_KEY" \
 </Accordion>
 
 <Note>
-  This endpoint is live but currently returns `null` for all projects. It is intended to resolve the canonical 01Resolved URL for a given project slug.
+  A `null` response means no link record has been saved for that slug. Individual link fields can also be empty. A missing record does not mean the project is unlisted.
 </Note>
 ---
 
