@@ -136,10 +136,11 @@ curl -H "x-api-key: YOUR_KEY" \
 
 Returns matching projects and proposals from a global search query.
 
-**Parameters:** `search` or `q` (at least one required).
+**Parameters:** `search` or `q` (optional), `type`, `limit`, `page`.
 
 `q` is an alias for `search`. If both are supplied, `search` takes precedence.
-`query` and `term` are not supported aliases.
+`query` and `term` are not supported aliases. Omitting a supported search term
+returns the unfiltered catalog.
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" \
